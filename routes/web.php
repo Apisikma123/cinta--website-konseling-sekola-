@@ -47,6 +47,16 @@ Route::middleware('web')->group(function () {
 // ============================================
 
 Route::middleware('guest')->group(function () {
+    // Login Routes (Teacher/Admin)
+    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [AuthController::class, 'login'])
+        ->middleware('throttle:5,1')
+        ->name('login.store');
+    Route::get('/login/otp', [AuthController::class, 'showLoginOtpForm'])->name('login.otp.form');
+    Route::post('/login/otp', [AuthController::class, 'verifyLoginOtp'])
+        ->middleware('throttle:5,1')
+        ->name('login.otp');
+    
     // Teacher Registration with Secret Verification
     Route::get('/register/teacher', [AuthController::class, 'showRegisterForm'])->name('register.teacher.form');
     Route::post('/register/teacher', [AuthController::class, 'register'])
@@ -81,13 +91,13 @@ Route::middleware(['auth', 'role:teacher', \App\Http\Middleware\CheckTeacherAppr
     // Password Management
     Route::post('/change-password', [TeacherController::class, 'changePasswordRequest'])->name('settings.change-password');
     Route::get('/verify-otp-password', [TeacherController::class, 'verifyOtpPassword'])->name('verify-otp-password');
-    Route::post('/verify-otp-password', [TeacherController::class, 'verifyOtpPassword']);
+    Route::post('/verify-otp-password', [TeacherController::class, 'verifyOtpPassword'])->name('verify-otp-password-store');
     Route::post('/resend-otp-password', [TeacherController::class, 'resendOtpPassword'])->name('resend-otp-password');
     
     // Email Management
     Route::post('/change-email', [TeacherController::class, 'changeEmailRequest'])->name('settings.change-email');
     Route::get('/verify-otp-email', [TeacherController::class, 'verifyOtpEmail'])->name('verify-otp-email');
-    Route::post('/verify-otp-email', [TeacherController::class, 'verifyOtpEmail']);
+    Route::post('/verify-otp-email', [TeacherController::class, 'verifyOtpEmail'])->name('verify-otp-email-store');
     Route::post('/resend-otp-email', [TeacherController::class, 'resendOtpEmail'])->name('resend-otp-email');
     
     // Report Status Management

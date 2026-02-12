@@ -25,7 +25,7 @@
         </div>
 
         {{-- Status Selector --}}
-        <form action="{{ route('report.update-status', $report->id) }}" method="POST"
+        <form action="{{ route('teacher.reports.update-status', $report->id) }}" method="POST"
               class="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 flex-shrink-0">
             @csrf
             @method('PATCH')

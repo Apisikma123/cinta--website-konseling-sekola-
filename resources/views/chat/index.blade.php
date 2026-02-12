@@ -3,8 +3,8 @@
     
     $chatLayout = $chatLayout ?? ($isStudentLayout ? 'layouts.student' : 'layouts.teacher');
     
-    $chatPostUrl = $isStudentLayout ? route('chat.murid.store', ['tracking_code' => $report->tracking_code]) : route('chat.store', ['tracking_code' => $report->tracking_code]);
-    $chatMessagesUrl = $isStudentLayout ? route('chat.murid.messages', ['tracking_code' => $report->tracking_code]) : route('chat.messages', ['tracking_code' => $report->tracking_code]);
+    $chatPostUrl = $isStudentLayout ? route('chat.murid.store', ['tracking_code' => $report->tracking_code]) : route('teacher.chat.store', ['tracking_code' => $report->tracking_code]);
+    $chatMessagesUrl = $isStudentLayout ? route('chat.murid.messages', ['tracking_code' => $report->tracking_code]) : route('teacher.chat.messages', ['tracking_code' => $report->tracking_code]);
     $currentUserId = auth()->check() ? auth()->id() : null;
     $recipientId = $isStudentLayout ? $report->guru_id : null; 
 @endphp
@@ -60,7 +60,7 @@
                 @endif
             </div>
             
-            <a href="{{ !$isStudentLayout ? route('teacher.reports.show', $report->id) : route('track.status', ['tracking_code' => $report->tracking_code]) }}" 
+            <a href="{{ !$isStudentLayout ? route('teacher.reports.show', $report->id) : route('track.status', $report->tracking_code) }}" 
                class="w-10 h-10 flex items-center justify-center text-white hover:bg-white/10 rounded-xl transition border border-transparent hover:border-white/20 active:scale-90">
                 <i class="fas fa-arrow-left"></i>
             </a>

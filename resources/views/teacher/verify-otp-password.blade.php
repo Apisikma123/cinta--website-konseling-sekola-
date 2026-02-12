@@ -1,7 +1,7 @@
 @include('auth.otp', [
     'title' => 'Verifikasi Perubahan Password',
     'subtitle' => 'Kode OTP dikirim ke email Anda',
-    'formAction' => route('teacher.verify-otp-password'),
+    'formAction' => route('teacher.verify-otp-password-store'),
     'backRoute' => route('teacher.settings'),
     'backLabel' => 'Kembali ke Pengaturan',
     'submitLabel' => 'Verifikasi & Ubah Password',

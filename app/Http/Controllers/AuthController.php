@@ -142,6 +142,12 @@ class AuthController extends Controller
         return response()->json(['message' => 'OTP terkirim.']);
     }
 
+    // Display login form
+    public function showLoginForm()
+    {
+        return view('auth.login');
+    }
+
     // Tampilkan form verifikasi OTP
     public function showOtpForm()
     {
