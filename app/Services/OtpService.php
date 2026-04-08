@@ -45,10 +45,10 @@ class OtpService
                 $secondsSince = 0;
             }
 
-            // Enforce 1 minute cooldown antara pengiriman
-            if (!$force && $secondsSince < 60) {
-                $retry = max(1, 60 - $secondsSince);
-                throw new \Exception('Tunggu beberapa saat sebelum meminta kode lagi.', $retry);
+            // Enforce 30 second cooldown antara pengiriman (reduced from 60)
+            if (!$force && $secondsSince < 30) {
+                $retry = max(1, 30 - $secondsSince);
+                throw new \Exception('Silakan tunggu ' . $retry . ' detik sebelum meminta kode lagi.', $retry);
             }
 
             // Mark previous OTP as used untuk menghindari multiple valid codes
@@ -67,58 +67,30 @@ class OtpService
             'expires_at' => $now->addMinutes(5), // OTP berlaku 5 menit
         ]);
 
-        // Kirim OTP via email
-        $sent = $this->sendOtpEmail($email, $code);
-
-        if ($sent) {
-            Log::info("OTP sent successfully for {$email}, otp_id={$otp->id}");
-        } else {
-            Log::error("Failed to send OTP email for {$email}, otp_id={$otp->id}");
-            // Tetap return OTP meskipun email gagal, agar bisa retry
+        // Dispatch OTP email to queue (async - non-blocking)
+        try {
+            $this->sendOtpEmail($email, $code);
+        } catch (\Exception $e) {
+            Log::error("Failed to dispatch OTP email job for {$email}: " . $e->getMessage());
+            // Continue anyway - OTP is already created in DB
         }
+
+        Log::info("OTP created and queued for email {$email}, otp_id={$otp->id}");
 
         return $otp;
     }
 
     /**
-     * Kirim OTP via email
-     * Menggunakan Resend API sebagai primary, Laravel Mail sebagai fallback
+     * Kirim OTP via email (async via queue)
      *
      * @param string $to Email tujuan
      * @param string $code Kode OTP
-     * @return bool
+     * @return void
      */
-    private function sendOtpEmail(string $to, string $code): bool
+    private function sendOtpEmail(string $to, string $code): void
     {
-        $subject = 'Kode OTP - Sistem Cinta';
-        $expiresInMinutes = 5;
-
-        // Coba kirim via Resend API dulu
-        try {
-            $sent = $this->resendService->sendOtp($to, $code, $expiresInMinutes);
-            if ($sent) {
-                return true;
-            }
-        } catch (\Exception $e) {
-            Log::warning("Resend API failed for {$to}: " . $e->getMessage());
-        }
-
-        // Fallback ke Laravel Mail (SMTP)
-        try {
-            $text = "Kode OTP Anda: {$code}\n\nKode ini berlaku selama {$expiresInMinutes} menit.\nJika Anda tidak meminta kode ini, abaikan email ini.\n\nSistem Cinta";
-
-            Mail::raw($text, function ($message) use ($to, $subject) {
-                $message->to($to)
-                    ->subject($subject);
-            });
-
-            Log::info("OTP sent via Laravel Mail for {$to}");
-            return true;
-        } catch (\Exception $e) {
-            Log::error("Laravel Mail failed for {$to}: " . $e->getMessage());
-        }
-
-        return false;
+        // Dispatch email sending to queue (async)
+        \App\Jobs\SendOtpEmail::dispatch($to, $code, 5);
     }
 
     /**

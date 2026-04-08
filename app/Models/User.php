@@ -25,6 +25,10 @@ class User extends Authenticatable
         'is_active',
         'last_activity',
         'profile_photo',
+        'otp_verified',
+        'approval_status',
+        'last_device_identifier',
+        'otp_verified_at',
     ];
 
     protected $hidden = [
@@ -36,6 +40,8 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'last_activity' => 'datetime',
         'is_approved' => 'boolean',
+        'otp_verified' => 'boolean',
+        'otp_verified_at' => 'datetime',
     ];
 
     // Role helpers

@@ -9,15 +9,21 @@ use App\Models\School;
 use App\Models\Testimonial;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
 
 class AdminController extends Controller
 {
     public function approveTeachers()
     {
+        // Only show teachers yang sudah verifikasi OTP dan belum di-approve
         $pendingTeachers = User::where('role', 'teacher')
-                              ->where('is_approved', false)
+                              ->where('otp_verified', true)
+                              ->where('approval_status', 'pending')
                               ->with('teacherApproval')
-                              ->orderBy('name')
+                              ->orderBy('created_at', 'desc')
                               ->paginate(10);
 
         return view('admin.approve-teachers', compact('pendingTeachers'));
@@ -26,8 +32,8 @@ class AdminController extends Controller
     public function teachers()
     {
         $teachers = User::where('role', 'teacher')
-            ->where('is_approved', true)
-            ->orderBy('name')
+            ->where('approval_status', 'approved')
+            ->orderBy('name', 'asc')
             ->paginate(10);
 
         return view('admin.teachers', compact('teachers'));
@@ -47,21 +53,33 @@ class AdminController extends Controller
 
     public function dashboard()
     {
-        // Optimized: Single query for teachers stats
-        $teacherStats = User::where('role', 'teacher')
-            ->selectRaw('COUNT(*) as total, SUM(IF(is_approved=true, 1, 0)) as approved, SUM(IF(is_approved=false, 1, 0)) as pending')
-            ->first();
+        // Total teachers with OTP verified
+        $totalTeachers = User::where('role', 'teacher')
+            ->where('otp_verified', true)
+            ->count();
 
-        // Optimized: Single query for schools stats
-        $schoolStats = School::selectRaw('COUNT(*) as total, SUM(IF(is_active=true, 1, 0)) as active, SUM(IF(is_active=false, 1, 0)) as inactive')
+        // Pending approval count
+        $pendingTeachers = User::where('role', 'teacher')
+            ->where('otp_verified', true)
+            ->where('approval_status', 'pending')
+            ->count();
+
+        // Approved teachers count
+        $approvedTeachers = User::where('role', 'teacher')
+            ->where('approval_status', 'approved')
+            ->count();
+
+        // Schools stats
+        $schoolStats = School::selectRaw('COUNT(*) as total, SUM(IF(is_active=true, 1, 0)) as active, SUM(IF(is_active=false, 1, 0)) as inactive', [])
             ->first();
 
         $stats = [
             'active_schools' => $schoolStats->active ?? 0,
             'inactive_schools' => $schoolStats->inactive ?? 0,
             'total_schools' => $schoolStats->total ?? 0,
-            'active_teachers' => $teacherStats->approved ?? 0,
-            'pending_teachers' => $teacherStats->pending ?? 0,
+            'total_teachers' => $totalTeachers,
+            'pending_teachers' => $pendingTeachers,
+            'approved_teachers' => $approvedTeachers,
         ];
 
         $schoolsChart = [
@@ -69,11 +87,13 @@ class AdminController extends Controller
             'nonaktif' => $stats['inactive_schools'],
         ];
 
+        // Latest 5 teachers (verified OTP, any status)
         $teachers = User::where('role', 'teacher')
-            ->where('is_approved', true)
-            ->select('id', 'name', 'email', 'school', 'whatsapp')
-            ->orderBy('name')
-            ->paginate(10);
+            ->where('otp_verified', true)
+            ->select(['id', 'name', 'email', 'school', 'whatsapp', 'profile_photo', 'approval_status', 'created_at'])
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
 
         return view('admin.dashboard', compact('stats', 'schoolsChart', 'teachers'));
     }
@@ -81,9 +101,9 @@ class AdminController extends Controller
     public function approveTeacher($id)
     {
         $user = User::findOrFail($id);
-        $user->update(['is_approved' => true]);
+        $user->update(['approval_status' => 'approved']);
 
-        \Illuminate\Support\Facades\Notification::route('mail', $user->email)
+        Notification::route('mail', $user->email)
             ->notify(new \App\Notifications\TeacherApprovedNotification($user));
 
         return back()->with('success', 'Guru berhasil disetujui.');
@@ -91,18 +111,21 @@ class AdminController extends Controller
 
     public function settings()
     {
+        /** @var \App\Models\User $user */
         $user = auth()->user();
         return view('admin.settings', compact('user'));
     }
 
     public function profile()
     {
+        /** @var \App\Models\User $user */
         $user = auth()->user();
         return view('admin.profile', compact('user'));
     }
 
-    public function updateSettings(\Illuminate\Http\Request $request)
+    public function updateSettings(Request $request)
     {
+        /** @var \App\Models\User $user */
         $user = auth()->user();
 
         $data = $request->validate([
@@ -116,20 +139,20 @@ class AdminController extends Controller
             $photo = $request->file('profile_photo');
             
             // Generate unique filename
-            $filename = 'profile/' . time() . '_' . \Illuminate\Support\Str::random(10) . '.jpg';
+            $filename = 'profile/' . time() . '_' . Str::random(10) . '.jpg';
 
             // Ensure directory exists
-            if (!\Illuminate\Support\Facades\Storage::disk('public')->exists('profile')) {
-                \Illuminate\Support\Facades\Storage::disk('public')->makeDirectory('profile');
+            if (!Storage::disk('public')->exists('profile')) {
+                Storage::disk('public')->makeDirectory('profile');
             }
 
             // Store file directly - file sudah dikompres di frontend (300x300, JPEG quality 0.8)
             // Ukuran file seharusnya sudah ±50-150KB
-            \Illuminate\Support\Facades\Storage::disk('public')->putFileAs('profile', $photo, basename($filename));
+            Storage::disk('public')->putFileAs('profile', $photo, basename($filename));
 
             // Delete old photo if exists
             if ($user->profile_photo) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->profile_photo);
+                Storage::disk('public')->delete($user->profile_photo);
             }
 
             $data['profile_photo'] = $filename;
@@ -143,11 +166,11 @@ class AdminController extends Controller
                 'password' => 'required|min:6|confirmed'
             ]);
 
-            if (!\Illuminate\Support\Facades\Hash::check($request->input('current_password'), $user->password)) {
+            if (!Hash::check($request->input('current_password'), $user->password)) {
                 return back()->withErrors(['current_password' => 'Password lama tidak cocok.']);
             }
 
-            $user->password = \Illuminate\Support\Facades\Hash::make($request->input('password'));
+            $user->password = Hash::make($request->input('password'));
             $user->save();
         }
 
@@ -156,7 +179,7 @@ class AdminController extends Controller
 
     public function schools()
     {
-        $schools = School::orderBy('name')->paginate(10);
+        $schools = School::orderBy('name', 'asc')->paginate(10);
         return view('admin.schools', compact('schools'));
     }
 
@@ -192,25 +215,6 @@ class AdminController extends Controller
     {
         $school->delete();
         return back()->with('success', 'Sekolah berhasil dihapus.');
-    }
-
-    // Manage secret formula untuk verifikasi murid
-    public function schoolSecrets()
-    {
-        $schools = School::where('is_active', true)->orderBy('name')->get();
-        return view('admin.school-secrets', compact('schools'));
-    }
-
-    public function updateSchoolSecret(Request $request, School $school)
-    {
-        $data = $request->validate([
-            'secret_formula' => 'required|string|max:255',
-            'secret_hint' => 'required|string|max:255',
-        ]);
-
-        $school->update($data);
-
-        return back()->with('success', 'Kode rahasia sekolah ' . $school->name . ' berhasil diperbarui.');
     }
 
     // Testimonials Management

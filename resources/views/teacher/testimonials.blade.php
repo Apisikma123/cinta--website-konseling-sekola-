@@ -66,13 +66,18 @@
                         </div>
                         <div class="min-w-0 flex-1">
                             <p class="text-sm font-semibold text-gray-900 truncate">{{ $testimonial->student_name }}</p>
-                            <p class="text-xs text-gray-500">{{ $testimonial->created_at->translatedFormat('d M Y') }}</p>
+                            <div class="flex flex-col gap-0.5">
+                                <p class="text-xs text-gray-500">{{ $testimonial->created_at->translatedFormat('d M Y') }}</p>
+                                @if($testimonial->report?->school || $testimonial->report?->nama_sekolah)
+                                <p class="text-xs text-purple-600 font-medium">{{ $testimonial->report?->school?->name ?? $testimonial->report?->nama_sekolah }}</p>
+                                @endif
+                            </div>
                         </div>
                     </div>
 
                     {{-- Actions --}}
                     <div class="flex gap-2">
-                        <form id="reject-form-{{ $testimonial->id }}" action="{{ route('testimonial.reject', $testimonial->id) }}" method="POST" class="flex-1">
+                        <form id="reject-form-{{ $testimonial->id }}" action="{{ route('teacher.testimonials.reject', $testimonial->id) }}" method="POST" class="flex-1">
                             @csrf
                             <button type="button"
                                     onclick="SwalUtils.confirm({
@@ -86,7 +91,7 @@
                                 <i class="fas fa-xmark text-xs"></i> Tolak
                             </button>
                         </form>
-                        <form id="approve-form-{{ $testimonial->id }}" action="{{ route('testimonial.approve', $testimonial->id) }}" method="POST" class="flex-1">
+                        <form id="approve-form-{{ $testimonial->id }}" action="{{ route('teacher.testimonials.approve', $testimonial->id) }}" method="POST" class="flex-1">
                             @csrf
                                     <button type="button"
                                             onclick="SwalUtils.approve({
@@ -150,7 +155,12 @@
                         </div>
                         <div class="flex-1 min-w-0">
                             <p class="text-sm font-semibold text-gray-900">{{ $testimonial->student_name }}</p>
-                            <p class="text-xs text-gray-500">{{ $testimonial->created_at->translatedFormat('M Y') }}</p>
+                            <div class="flex flex-col gap-0.5">
+                                <p class="text-xs text-gray-500">{{ $testimonial->created_at->translatedFormat('M Y') }}</p>
+                                @if($testimonial->report?->school || $testimonial->report?->nama_sekolah)
+                                <p class="text-xs text-purple-600 font-medium">{{ $testimonial->report?->school?->name ?? $testimonial->report?->nama_sekolah }}</p>
+                                @endif
+                            </div>
                         </div>
                     </div>
 

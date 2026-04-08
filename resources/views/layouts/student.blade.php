@@ -298,5 +298,8 @@
             });
         });
     </script>
+
+    {{-- ★ Global Page Loading Overlay ★ --}}
+    @include('components.loading')
 </body>
 </html>

@@ -753,35 +753,44 @@
             Apa Kata Mereka
         </h2>
         @if($testimonials->count())
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            @foreach($testimonials as $testimonial)
-            <div class="scroll-animate">
-                <div class="testimonial-card bg-white rounded-2xl p-6 border border-purple-100 h-full flex flex-col shadow-sm">
-                    <!-- Star Rating -->
-                    <div class="star-rating flex items-center gap-1 mb-4">
-                        @for ($i = 0; $i < 5; $i++)
-                            <i class="fas fa-star {{ $i < $testimonial->rating ? 'text-amber-400' : 'text-gray-300' }} text-sm"></i>
-                        @endfor
-                    </div>
-                    <p class="testimonial-content text-sm text-gray-600 flex-1 mb-4 leading-relaxed">
-                        "{{ Str::limit($testimonial->content, 150) }}"
-                    </p>
-                    <div class="flex items-center gap-3">
-                        <div class="testimonial-avatar bg-gradient-to-br from-purple-400 to-pink-400 text-white">
-                            @php
-                                $name = $testimonial->is_anonymous ? 'A' : substr($testimonial->student_name, 0, 1);
-                            @endphp
-                            {{ strtoupper($name) }}
+        {{-- Loop by school --}}
+        @foreach($testimonials as $schoolName => $schoolTestimonials)
+        <div class="mb-12">
+            <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-6 scroll-animate flex items-center gap-2">
+                <span class="w-1 h-1 bg-purple-600 rounded-full"></span>
+                {{ $schoolName }}
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                @foreach($schoolTestimonials as $testimonial)
+                <div class="scroll-animate">
+                    <div class="testimonial-card bg-white rounded-2xl p-6 border border-purple-100 h-full flex flex-col shadow-sm">
+                        <!-- Star Rating -->
+                        <div class="star-rating flex items-center gap-1 mb-4">
+                            @for ($i = 0; $i < 5; $i++)
+                                <i class="fas fa-star {{ $i < $testimonial->rating ? 'text-amber-400' : 'text-gray-300' }} text-sm"></i>
+                            @endfor
                         </div>
-                        <div>
-                            <p class="testimonial-name text-sm font-semibold text-gray-900">{{ $testimonial->is_anonymous ? 'Murid Anonim' : $testimonial->student_name }}</p>
-                            <p class="text-xs text-gray-500">{{ $testimonial->report->nama_sekolah ?? 'Siswa Puas' }}</p>
+                        <p class="testimonial-content text-sm text-gray-600 flex-1 mb-4 leading-relaxed">
+                            "{{ Str::limit($testimonial->content, 150) }}"
+                        </p>
+                        <div class="flex items-center gap-3">
+                            <div class="testimonial-avatar bg-gradient-to-br from-purple-400 to-pink-400 text-white">
+                                @php
+                                    $name = $testimonial->is_anonymous ? 'A' : substr($testimonial->student_name, 0, 1);
+                                @endphp
+                                {{ strtoupper($name) }}
+                            </div>
+                            <div>
+                                <p class="testimonial-name text-sm font-semibold text-gray-900">{{ $testimonial->is_anonymous ? 'Murid Anonim' : $testimonial->student_name }}</p>
+                                <p class="text-xs text-gray-500">{{ $testimonial->report->nama_sekolah ?? 'Siswa Puas' }}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
+                @endforeach
             </div>
-            @endforeach
         </div>
+        @endforeach
         @else
         <div class="max-w-xl mx-auto scroll-animate">
             <div class="bg-white/60 border border-gray-200 rounded-xl p-6 text-center">

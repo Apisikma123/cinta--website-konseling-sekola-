@@ -24,7 +24,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // log mail deliveries so we can debug delivery timing
         Event::listen(MessageSent::class, function (MessageSent $event) {
-            $to = implode(',', array_map(fn($addr) => $addr->getAddress(), $event->message->getTo()));
+            $to = implode(',', array_keys($event->message->getTo() ?? []));
             Log::info("Mail sent to {$to} subject={$event->message->getSubject()}");
         });
     }

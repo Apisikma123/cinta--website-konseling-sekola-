@@ -18,6 +18,7 @@ class TestReportSeeder extends Seeder
             $school = School::create([
                 'name' => 'SMA Test',
                 'city' => 'Jakarta',
+                'secret_code_generated_at' => now(),
             ]);
         }
 

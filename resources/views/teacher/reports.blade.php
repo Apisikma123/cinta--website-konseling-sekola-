@@ -32,12 +32,22 @@
                     @foreach($reports as $report)
                     <tr class="hover:bg-gray-50">
                         <td class="px-5 py-3">
-                            <p class="text-sm font-semibold text-gray-900 truncate max-w-[200px]">{{ $report->title }}</p>
-                            <code class="text-xs text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100 font-mono">#{{ $report->tracking_code }}</code>
+                            @if($report->is_claimed)
+                                <p class="text-sm font-semibold text-gray-900 truncate max-w-[200px]">{{ $report->title }}</p>
+                                <code class="text-xs text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100 font-mono">#{{ $report->tracking_code }}</code>
+                            @else
+                                <p class="text-sm font-semibold text-gray-400 truncate max-w-[200px] blur-[3px] select-none">████████████</p>
+                                <code class="text-xs text-gray-300 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100 font-mono blur-[2px] select-none">#██████</code>
+                            @endif
                         </td>
                         <td class="px-4 py-3">
-                            <p class="text-sm font-medium text-gray-800">{{ $report->nama_murid }}</p>
-                            <p class="text-xs text-gray-500">{{ $report->nama_sekolah }} · {{ $report->kelas }}</p>
+                            @if($report->is_claimed)
+                                <p class="text-sm font-medium text-gray-800">{{ $report->nama_murid }}</p>
+                                <p class="text-xs text-gray-500">{{ $report->nama_sekolah }} · {{ $report->kelas }}</p>
+                            @else
+                                <p class="text-sm font-medium text-gray-700">{{ $report->censored_name }}</p>
+                                <p class="text-xs text-gray-400">{{ $report->nama_sekolah }} · {{ $report->censored_kelas }}</p>
+                            @endif
                         </td>
                         <td class="px-4 py-3 text-sm text-gray-600">{{ ucfirst($report->jenis_laporan ?? '—') }}</td>
                         <td class="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">{{ $report->created_at->translatedFormat('d M Y') }}</td>
@@ -62,8 +72,11 @@
                         </td>
                         <td class="px-5 py-3 text-right">
                             <a href="{{ route('teacher.reports.show', $report) }}"
-                               class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors duration-150">
+                               class="relative inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors duration-150">
                                 <i class="fas fa-eye text-xs"></i> Detail
+                                @if(isset($unreadChatCounts[$report->id]) && $unreadChatCounts[$report->id] > 0)
+                                    <span class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">{{ $unreadChatCounts[$report->id] }}</span>
+                                @endif
                             </a>
                         </td>
                     </tr>

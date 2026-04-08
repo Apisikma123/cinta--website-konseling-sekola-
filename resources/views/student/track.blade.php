@@ -252,14 +252,15 @@ document.addEventListener('click', function(event) {
 </script>
 
 <!-- Testimonial Modal -->
-<div id="testimonialModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-xl shadow-lg max-w-md w-full">
-        <div class="p-6 border-b border-gray-200 flex items-center justify-between">
-            <h2 class="text-lg font-bold text-gray-900">Berikan Testimoni</h2>
-            <button onclick="closeTestimonialModal()" class="text-gray-500 hover:text-gray-700 text-xl">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
+<div id="testimonialModal" class="hidden fixed inset-0 bg-black/50 z-50 p-4" style="display: none;">
+    <div class="flex items-center justify-center h-full">
+        <div class="bg-white rounded-xl shadow-lg max-w-md w-full">
+            <div class="p-6 border-b border-gray-200 flex items-center justify-between">
+                <h2 class="text-lg font-bold text-gray-900">Berikan Testimoni</h2>
+                <button onclick="closeTestimonialModal()" class="text-gray-500 hover:text-gray-700 text-xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
         
         <div class="p-6 space-y-4">
             <!-- Rating Stars -->

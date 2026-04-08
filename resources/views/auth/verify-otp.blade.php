@@ -7,8 +7,22 @@
 <div class="text-center mb-8">
     <h1 class="text-3xl font-bold text-gray-900 mb-3">Verifikasi OTP</h1>
     <p class="text-gray-600 text-base">
-        Kami telah mengirim kode OTP ke email Anda
+        Kami telah mengirim kode OTP ke email Anda, 
+        jika kode OTP tidak masuk silahkan buka tab spam.
     </p>
+</div>
+
+<!-- Email Display Box -->
+<div class="max-w-2xl mx-auto bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+    <div class="flex items-center justify-center gap-3">
+        <i class="fas fa-envelope text-blue-600 text-lg"></i>
+        <div class="text-left">
+            <p class="text-xs text-blue-600 font-medium mb-1">Email Tujuan OTP</p>
+            <p class="text-sm md:text-base font-semibold text-gray-800 break-all" id="emailDisplay">
+                {{ $email ?? session('pending_email', 'tidak ada email') }}
+            </p>
+        </div>
+    </div>
 </div>
 
 <!-- Error Messages -->
@@ -278,18 +292,6 @@
                 text: errorMessage,
                 confirmButtonColor: '#9333ea',
                 confirmButtonText: 'Coba Lagi'
-            });
-        @endif
-
-        @if (session('success'))
-            Swal.fire({
-                icon: 'success',
-                title: 'Verifikasi Berhasil!',
-                text: '{{ session('success') }}',
-                confirmButtonColor: '#9333ea',
-                didClose: () => {
-                    window.location.href = '{{ url('/') }}';
-                }
             });
         @endif
 

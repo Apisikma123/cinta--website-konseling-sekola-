@@ -65,9 +65,13 @@
         </button>
 
         <!-- Loading Modal -->
-        <div id="loginLoadingModal" class="fixed inset-0 bg-white flex items-center justify-center z-50 hidden">
-            <x-loading message="Memverifikasi login..." />
+        @push('modals')
+        <div id="loginLoadingModal" class="hidden fixed inset-0 bg-white z-[999999]" style="display: none;">
+            <div class="flex items-center justify-center h-full">
+                <x-loading message="Memverifikasi login..." />
+            </div>
         </div>
+        @endpush
     </div>
 </form>
 

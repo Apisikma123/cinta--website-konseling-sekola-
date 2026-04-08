@@ -5,63 +5,108 @@ namespace App\Services;
 use App\Events\ReportCreated;
 use App\Events\ReportStatusChanged;
 use App\Models\Report;
+use App\Models\User;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\URL;
 
 class ReportService
 {
     /**
-     * Create a report and fire ReportCreated event.
+     * Create verified report directly (Called ONLY after Magic Link is clicked).
      */
-    public function create(array $data): Report
+    public function createVerified(array $data): Report
     {
         return DB::transaction(function () use ($data) {
-            // generate unique tracking code
+            // Generate unique tracking code BARU ketik link diklik (karena dimasukkan ke DB baru sekarang)
             $code = $this->generateTrackingCode();
 
-            $report = Report::create(array_merge($data, ['tracking_code' => $code, 'status' => Report::STATUS_BARU]));
+            $reportData = array_merge($data, ['tracking_code' => $code, 'status' => Report::STATUS_BARU]);
+            
+            // Auto-assign a teacher from the same school if available
+            if (!empty($data['nama_sekolah'])) {
+                $teacher = User::where('role', 'teacher')
+                    ->where('school', $data['nama_sekolah'])
+                    ->where('is_active', true)
+                    ->where('approval_status', 'approved')
+                    ->inRandomOrder()
+                    ->first();
+                
+                if ($teacher) {
+                    $reportData['guru_id'] = $teacher->id;
+                }
+            }
+
+            $report = Report::create($reportData);
 
             event(new ReportCreated($report));
 
-            // Send email to student if email provided
-            if (!empty($data['email_murid'])) {
-                $this->sendTrackingCodeEmail($report, $data);
-            }
-
-            // Send email notification to teachers in the same school
-            $this->sendReportNotificationToTeachers($report);
-
-            // Send email notification to admin
-            $this->sendReportNotificationToAdmin($report, 'created');
+            // Langsung kirim notif success ke murid & guru karena sudah terverifikasi!
+            $this->sendSuccessNotification($report);
 
             return $report;
         });
     }
 
     /**
-     * Send tracking code email to student
+     * Old create method kept for backward compatibility if needed elsewhere
      */
-    protected function sendTrackingCodeEmail(Report $report, array $data): void
+    public function create(array $data): Report
+    {
+        return $this->createVerified($data);
+    }
+
+    /**
+     * Send tracking code email to student (Now behaves as a MAGIC LINK, no Report dependency)
+     */
+    public function sendVerificationEmailOnly(array $data, string $token): void
     {
         try {
-            $emailBody = "Halo {$data['nama_murid']},\n\n";
-            $emailBody .= "Laporan Anda telah berhasil diterima oleh sistem.\n\n";
-            $emailBody .= "Kode Tracking: {$report->tracking_code}\n";
-            $emailBody .= "Sekolah: {$data['nama_sekolah']}\n";
-            $emailBody .= "Tanggal: " . now()->format('d M Y H:i') . "\n\n";
-            $emailBody .= "Gunakan kode tracking ini untuk memantau status laporan Anda.\n";
-            $emailBody .= "Kunjungi: " . route('result', $report->tracking_code) . "\n\n";
-            $emailBody .= "Terima kasih,\nSistem Laporan BK";
+            // Generate signed URL valid for 15 minutes
+            $verificationUrl = URL::signedRoute('report.verify', ['token' => $token], now()->addMinutes(15));
 
-            Mail::raw($emailBody, function ($message) use ($data, $report) {
+            $emailBody = "Halo {$data['nama_murid']}! Klik link ini buat verifikasi laporan kamu ya: {$verificationUrl}. Link ini cuma aktif 15 menit. Yuk, segera diverifikasi!";
+
+            Mail::raw($emailBody, function ($message) use ($data) {
                 $message->to($data['email_murid'])
-                    ->subject('Kode Tracking Laporan BK - ' . $report->tracking_code);
+                    ->subject('Verifikasi Laporan BK Anda');
             });
         } catch (\Exception $e) {
-            \Log::error('Failed to send tracking code email: ' . $e->getMessage());
+            Log::error('Failed to send verification email: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Send SUCCESS notification with Tracking Code after verification
+     */
+    public function sendSuccessNotification(Report $report): void
+    {
+        try {
+            $emailBody = "Selamat!\nLaporan kamu sudah berhasil diverifikasi dan masuk ke sistem kami.\n\n";
+            $emailBody .= "Berikut adalah detail laporan kamu:\n";
+            $emailBody .= "- Nama Pelapor: {$report->nama_murid}\n";
+            $emailBody .= "- Email: {$report->email_murid}\n";
+            $emailBody .= "- Sekolah: {$report->nama_sekolah}\n";
+            $emailBody .= "- Kelas: {$report->kelas}\n";
+            $emailBody .= "- Jenis Laporan: {$report->jenis_laporan}\n\n";
+            $emailBody .= "KODE TRACKING / UNIK KAMU: {$report->tracking_code}\n\n";
+            $emailBody .= "Mohon simpan kode ini baik-baik ya untuk memantau status atau melakukan konsultasi bersama guru BK!\n";
+
+            Mail::raw($emailBody, function ($message) use ($report) {
+                $message->to($report->email_murid)
+                    ->subject('Laporan Diterima! Ini Kode Unik Kamu');
+            });
+
+            // CATATAN: Notifikasi ke guru sudah ditangani oleh Event Listener
+            // NotifyTeachersOfNewReport yang dipanggil via event(new ReportCreated($report))
+            // di createVerified(). Jangan panggil sendReportNotificationToTeachers() di sini
+            // karena akan mengakibatkan guru menerima 2 email untuk 1 laporan yang sama.
+
+        } catch (\Exception $e) {
+            Log::error('Failed to send success email: ' . $e->getMessage());
         }
     }
 
@@ -108,22 +153,24 @@ class ReportService
             $resendService = new ResendService();
 
             // Get admin emails (users with role 'admin')
-            $admins = \App\Models\User::where('role', 'admin')->where('is_active', true)->get();
+            $admins = User::where('role', 'admin')->where('is_active', true)->get();
 
             if ($admins->isEmpty()) {
-                \Log::warning('No admin found to send report notification');
+                Log::warning('No admin found to send report notification');
                 return;
             }
 
             // Get teacher name if report is handled by a teacher
             $teacherName = 'Sistem';
             if ($report->guru_id) {
-                $teacher = \App\Models\User::find($report->guru_id);
+                $teacher = User::find($report->guru_id);
                 if ($teacher) {
                     $teacherName = $teacher->name;
                 }
-            } elseif (auth()->check()) {
-                $teacherName = auth()->user()->name;
+            } elseif (Auth::check()) {
+                /** @var \App\Models\User|null $authUser */
+                $authUser = Auth::user();
+                $teacherName = $authUser->name;
             }
 
             // Send email to each admin
@@ -136,13 +183,13 @@ class ReportService
                 );
 
                 if ($sent) {
-                    \Log::info("Report notification sent to admin: {$admin->email}, report: {$report->id}");
+                    Log::info("Report notification sent to admin: {$admin->email}, report: {$report->id}");
                 } else {
-                    \Log::error("Failed to send report notification to admin: {$admin->email}, report: {$report->id}");
+                    Log::error("Failed to send report notification to admin: {$admin->email}, report: {$report->id}");
                 }
             }
         } catch (\Exception $e) {
-            \Log::error('Error sending report notification: ' . $e->getMessage());
+            Log::error('Error sending report notification: ' . $e->getMessage());
         }
     }
 
@@ -152,14 +199,14 @@ class ReportService
     protected function sendReportNotificationToTeachers(Report $report): void
     {
         try {
-            // Get all active teachers from the same school
-            $teachers = \App\Models\User::where('role', 'teacher')
-                ->where('school', $report->school->name ?? '')
+            // Get all active teachers from the exact SAME SCHOOL
+            $teachers = User::where('role', 'teacher')
+                ->where('school', $report->nama_sekolah)
                 ->where('is_active', true)
                 ->get();
 
             if ($teachers->isEmpty()) {
-                \Log::warning("No teachers found in school: {$report->nama_sekolah}, report: {$report->id}");
+                Log::warning("No teachers found in school: {$report->nama_sekolah}, report: {$report->id}");
                 return;
             }
 
@@ -185,13 +232,13 @@ class ReportService
                             ->subject("Laporan Baru dari Siswa - {$report->tracking_code}");
                     });
 
-                    \Log::info("Report notification sent to teacher: {$teacher->email}, report: {$report->id}");
+                    Log::info("Report notification sent to teacher: {$teacher->email}, report: {$report->id}");
                 } catch (\Exception $e) {
-                    \Log::error("Failed to send email to teacher {$teacher->email}: " . $e->getMessage());
+                    Log::error("Failed to send email to teacher {$teacher->email}: " . $e->getMessage());
                 }
             }
         } catch (\Exception $e) {
-            \Log::error('Error sending report notification to teachers: ' . $e->getMessage());
+            Log::error('Error sending report notification to teachers: ' . $e->getMessage());
         }
     }
 
@@ -231,9 +278,9 @@ class ReportService
                     ->subject("Update Status Laporan BK - {$report->tracking_code}");
             });
 
-            \Log::info("Status change email sent to student: {$report->email_murid}, report: {$report->id}");
+            Log::info("Status change email sent to student: {$report->email_murid}, report: {$report->id}");
         } catch (\Exception $e) {
-            \Log::error('Failed to send status change email: ' . $e->getMessage());
+            Log::error('Failed to send status change email: ' . $e->getMessage());
         }
     }
 }

@@ -23,15 +23,35 @@ $resendRoute = $resendRoute ?? 'resend.otp';
 @extends('layouts.auth', ['title' => $title])
 
 @section('content')
+
 <!-- Header -->
-<div class="text-center mb-8">
-    <h1 class="text-3xl font-bold text-gray-900 mb-3">{{ $title }}</h1>
-    <p class="text-gray-600 text-base">{{ $subtitle }}</p>
+<div class="text-center mb-6">
+    <!-- Icon -->
+    <div class="flex justify-center mb-4">
+        <div class="w-14 h-14 rounded-full bg-purple-100 flex items-center justify-center">
+            <i class="fas fa-shield-alt text-2xl text-purple-600"></i>
+        </div>
+    </div>
+    
+    <!-- Title & Subtitle -->
+    <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-1">{{ $title }}</h1>
+    <p class="text-gray-600 text-sm md:text-base mb-3">{{ $subtitle }}</p>
+</div>
+
+<!-- Email Display Box -->
+<div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+    <div class="flex items-center justify-center gap-3">
+        <i class="fas fa-envelope text-blue-600 text-lg"></i>
+        <div class="text-left">
+            <p class="text-xs text-blue-600 font-medium mb-1">Email Tujuan OTP</p>
+            <p class="text-sm md:text-base font-semibold text-gray-800 break-all" id="emailDisplay">{{ $email ?? session('pending_email') }}</p>
+        </div>
+    </div>
 </div>
 
 <!-- Error Messages -->
 @if($errors->any())
-    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
         <ul class="list-disc pl-5 text-sm space-y-1">
             @foreach($errors->all() as $error)
                 <li>{{ $error }}</li>
@@ -42,49 +62,55 @@ $resendRoute = $resendRoute ?? 'resend.otp';
 
 <!-- Success Messages -->
 @if(session('success'))
-    <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6 text-sm">
+    <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-4 text-sm">
         {{ session('success') }}
     </div>
 @endif
 
 <!-- Form -->
-<form method="POST" action="{{ $formAction }}" id="otpForm" class="max-w-2xl mx-auto">
+<form method="POST" action="{{ $formAction }}" id="otpForm" autocomplete="off">
     @csrf
 
     <!-- OTP Input Section -->
-    <div class="mb-8">
-        <label class="block text-center font-medium text-gray-700 mb-6 text-lg">Masukkan Kode OTP</label>
-        <div class="flex justify-center gap-1 sm:gap-2 lg:gap-4 flex-nowrap mb-4">
-            <input type="text" class="otp-input w-8 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 text-center border border-gray-300 rounded-lg text-xs sm:text-sm lg:text-lg font-semibold focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition flex-shrink-0" maxlength="1" inputmode="numeric">
-            <input type="text" class="otp-input w-8 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 text-center border border-gray-300 rounded-lg text-xs sm:text-sm lg:text-lg font-semibold focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition flex-shrink-0" maxlength="1" inputmode="numeric">
-            <input type="text" class="otp-input w-8 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 text-center border border-gray-300 rounded-lg text-xs sm:text-sm lg:text-lg font-semibold focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition flex-shrink-0" maxlength="1" inputmode="numeric">
-            <input type="text" class="otp-input w-8 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 text-center border border-gray-300 rounded-lg text-xs sm:text-sm lg:text-lg font-semibold focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition flex-shrink-0" maxlength="1" inputmode="numeric">
-            <input type="text" class="otp-input w-8 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 text-center border border-gray-300 rounded-lg text-xs sm:text-sm lg:text-lg font-semibold focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition flex-shrink-0" maxlength="1" inputmode="numeric">
-            <input type="text" class="otp-input w-8 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 text-center border border-gray-300 rounded-lg text-xs sm:text-sm lg:text-lg font-semibold focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition flex-shrink-0" maxlength="1" inputmode="numeric">
+    <div class="my-4">
+        <label class="block text-center font-semibold text-gray-700 mb-2 text-base">Masukkan Kode OTP</label>
+        <div class="w-full flex justify-center">
+            <div class="flex items-center justify-center w-full max-w-[20rem] gap-2 sm:gap-2.5 md:gap-3 lg:gap-3 xl:gap-4 px-2 sm:px-1 md:px-0 lg:px-0">
+                <input type="text" class="otp-input w-10 h-11 text-sm sm:w-11 sm:h-12 md:w-12 md:h-14 md:text-base lg:w-12 lg:h-14 lg:text-base xl:w-[52px] xl:h-14 xl:text-lg 2xl:w-14 2xl:h-14 2xl:text-xl text-center font-bold border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition" maxlength="1" inputmode="numeric" pattern="[0-9]*">
+                <input type="text" class="otp-input w-10 h-11 text-sm sm:w-11 sm:h-12 md:w-12 md:h-14 md:text-base lg:w-12 lg:h-14 lg:text-base xl:w-[52px] xl:h-14 xl:text-lg 2xl:w-14 2xl:h-14 2xl:text-xl text-center font-bold border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition" maxlength="1" inputmode="numeric" pattern="[0-9]*">
+                <input type="text" class="otp-input w-10 h-11 text-sm sm:w-11 sm:h-12 md:w-12 md:h-14 md:text-base lg:w-12 lg:h-14 lg:text-base xl:w-[52px] xl:h-14 xl:text-lg 2xl:w-14 2xl:h-14 2xl:text-xl text-center font-bold border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition" maxlength="1" inputmode="numeric" pattern="[0-9]*">
+                
+                <span class="text-sm sm:text-sm md:text-base lg:text-base xl:text-lg 2xl:text-xl font-bold text-gray-400 px-1">-</span>
+                
+                <input type="text" class="otp-input w-10 h-11 text-sm sm:w-11 sm:h-12 md:w-12 md:h-14 md:text-base lg:w-12 lg:h-14 lg:text-base xl:w-[52px] xl:h-14 xl:text-lg 2xl:w-14 2xl:h-14 2xl:text-xl text-center font-bold border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition" maxlength="1" inputmode="numeric" pattern="[0-9]*">
+                <input type="text" class="otp-input w-10 h-11 text-sm sm:w-11 sm:h-12 md:w-12 md:h-14 md:text-base lg:w-12 lg:h-14 lg:text-base xl:w-[52px] xl:h-14 xl:text-lg 2xl:w-14 2xl:h-14 2xl:text-xl text-center font-bold border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition" maxlength="1" inputmode="numeric" pattern="[0-9]*">
+                <input type="text" class="otp-input w-10 h-11 text-sm sm:w-11 sm:h-12 md:w-12 md:h-14 md:text-base lg:w-12 lg:h-14 lg:text-base xl:w-[52px] xl:h-14 xl:text-lg 2xl:w-14 2xl:h-14 2xl:text-xl text-center font-bold border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition" maxlength="1" inputmode="numeric" pattern="[0-9]*">
+            </div>
         </div>
         <input type="hidden" name="otp" id="otp_hidden">
     </div>
 
-    <!-- Timer Expired -->
-    <p id="expiredTimer" class="text-center text-sm text-gray-600 mb-6 font-medium"></p>
-
-    <!-- Resend Timer Section -->
-    <div class="text-center mb-8">
-        <p class="text-sm text-gray-600 mb-2">Kirim ulang dalam: <span id="resendTimer" class="font-semibold text-purple-600">01:00</span></p>
-        <button type="button" id="resendBtn" disabled class="text-purple-600 hover:text-purple-700 font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed transition">
+    <!-- OTP Status Messages -->
+    <div class="text-center space-y-2 mt-4 mb-4">
+        <p id="expiredTimer" class="text-sm text-gray-600 font-medium"></p>
+        <p class="text-sm text-gray-600">
+            Kirim ulang dalam: <span id="resendTimer" class="font-semibold text-purple-600">00:30</span>
+        </p>
+        <button type="button" id="resendBtn" disabled class="text-sm font-semibold text-purple-600 hover:text-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition">
             Kirim Ulang OTP
         </button>
     </div>
 
     <!-- Submit Button -->
-    <button type="submit" id="submitBtn" class="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold text-base hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition">
+    <button type="submit" id="submitBtn" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 rounded-xl shadow-md transition">
         {{ $submitLabel }}
     </button>
 
     <!-- Back Link -->
     @if(isset($backRoute))
-        <div class="mt-6 text-center">
-            <a href="{{ $backRoute }}" class="text-sm text-gray-600 hover:text-gray-900">
+        <div class="mt-4 text-center">
+            <a href="{{ $backRoute }}" class="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-purple-600 transition">
+                <i class="fas fa-arrow-left text-xs"></i>
                 {{ $backLabel }}
             </a>
         </div>
@@ -148,14 +174,18 @@ $resendRoute = $resendRoute ?? 'resend.otp';
     }
 
     // Timer Expired (5 minutes = 300 seconds)
-    function startExpiredTimer() {
+    function startExpiredTimer(isFreshStart = false) {
         let remainingSeconds = 300;
         expiredTimer.textContent = 'Kode akan kadaluarsa dalam 05:00';
 
-        const sentAt = {{ session('otp_sent_at', 0) }} * 1000;
-        if (sentAt) {
-            const elapsed = Math.floor((Date.now() - sentAt) / 1000);
-            remainingSeconds = Math.max(0, 300 - elapsed);
+        // Jika fresh start (resend), langsung gunakan 300 detik
+        // Jika bukan (page load), calculate berdasarkan otp_sent_at
+        if (!isFreshStart) {
+            const sentAt = {{ session('otp_sent_at', 0) }} * 1000;
+            if (sentAt) {
+                const elapsed = Math.floor((Date.now() - sentAt) / 1000);
+                remainingSeconds = Math.max(0, 300 - elapsed);
+            }
         }
 
         expiredInterval = setInterval(() => {
@@ -175,15 +205,19 @@ $resendRoute = $resendRoute ?? 'resend.otp';
         }, 1000);
     }
 
-    // Timer Resend (60 seconds)
-    function startResendTimer() {
-        let remainingSeconds = 60;
+    // Timer Resend (30 seconds - sesuai backend cooldown)
+    function startResendTimer(isFreshStart = false) {
+        let remainingSeconds = 30;
         resendBtn.disabled = true;
 
-        const sentAt = {{ session('otp_sent_at', 0) }} * 1000;
-        if (sentAt) {
-            const elapsed = Math.floor((Date.now() - sentAt) / 1000);
-            remainingSeconds = Math.max(0, 60 - elapsed);
+        // Jika fresh start (resend), langsung gunakan 30 detik
+        // Jika bukan (page load), calculate berdasarkan otp_sent_at
+        if (!isFreshStart) {
+            const sentAt = {{ session('otp_sent_at', 0) }} * 1000;
+            if (sentAt) {
+                const elapsed = Math.floor((Date.now() - sentAt) / 1000);
+                remainingSeconds = Math.max(0, 30 - elapsed);
+            }
         }
 
         if (remainingSeconds <= 0) {
@@ -216,50 +250,71 @@ $resendRoute = $resendRoute ?? 'resend.otp';
 
         try {
             const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            const res = await fetch('{{ route($resendRoute) }}', {
+            const emailDisplay = document.getElementById('emailDisplay');
+            // Get email from display text (trim whitespace)
+            const email = emailDisplay ? emailDisplay.textContent.trim() : '';
+            
+            if (!email || email === 'email@example.com') {
+                throw new Error('Email tidak ditemukan');
+            }
+            
+            console.log('Resending OTP to:', email);
+            
+            const response = await fetch('{{ route($resendRoute) }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': token
-                }
+                },
+                body: JSON.stringify({
+                    email: email
+                })
             });
 
-            if (res.ok) {
-                // Reset timers
+            const data = await response.json();
+
+            if (data.success) {
+                // Reset timers dengan fresh start (300 detik penuh)
                 clearInterval(expiredInterval);
                 clearInterval(resendInterval);
                 isOtpExpired = false;
                 expiredTimer.classList.remove('text-red-600');
                 submitBtn.disabled = false;
                 
-                startExpiredTimer();
-                startResendTimer();
+                // Clear OTP input fields
+                otpInputs.forEach(input => input.value = '');
+                otpHidden.value = '';
+                
+                startExpiredTimer(true); // Fresh start = 300 detik penuh
+                startResendTimer(true); // Fresh start = 30 detik
 
                 // Show success message
                 Swal.fire({
                     icon: 'success',
                     title: 'OTP Terkirim!',
-                    text: 'Kode OTP baru telah dikirim ke email Anda. Silakan periksa inbox atau folder spam.',
+                    text: 'Kode OTP baru telah dikirim ke ' + email + '. Silakan periksa inbox atau folder spam.',
                     confirmButtonColor: '#9333ea',
                     timer: 3000,
                     timerProgressBar: true
                 });
             } else {
                 resendBtn.disabled = false;
-                const data = await res.json();
+                const errorMsg = data.message || 'Gagal mengirim ulang OTP';
                 Swal.fire({
                     icon: 'error',
                     title: 'Gagal!',
-                    text: data.message || 'Gagal mengirim ulang OTP',
+                    text: errorMsg,
                     confirmButtonColor: '#9333ea'
                 });
+                console.error('Resend OTP error:', data);
             }
         } catch (error) {
             resendBtn.disabled = false;
+            console.error('Resend OTP fetch error:', error);
             Swal.fire({
                 icon: 'error',
                 title: 'Kesalahan!',
-                text: 'Terjadi kesalahan saat mengirim ulang OTP',
+                text: error.message || 'Terjadi kesalahan saat mengirim ulang OTP',
                 confirmButtonColor: '#9333ea'
             });
         }
@@ -305,18 +360,6 @@ $resendRoute = $resendRoute ?? 'resend.otp';
                 text: errorMessage,
                 confirmButtonColor: '#9333ea',
                 confirmButtonText: 'Coba Lagi'
-            });
-        @endif
-
-        @if (session('success'))
-            Swal.fire({
-                icon: 'success',
-                title: 'Verifikasi Berhasil!',
-                text: '{{ session('success') }}',
-                confirmButtonColor: '#9333ea',
-                didClose: () => {
-                    window.location.href = '{{ url('/') }}';
-                }
             });
         @endif
 

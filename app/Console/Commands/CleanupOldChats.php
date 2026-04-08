@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Chat;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class CleanupOldChats extends Command
 {
@@ -33,6 +34,6 @@ class CleanupOldChats extends Command
         
         $this->info("Deleted {$deleted} old chat messages older than {$days} days.");
         
-        \Log::info("Chat cleanup executed: {$deleted} messages deleted older than {$days} days");
+        Log::info("Chat cleanup executed: {$deleted} messages deleted older than {$days} days");
     }
 }

@@ -66,7 +66,7 @@ class ImageService
             
             return $path;
         } catch (\Exception $e) {
-            \Log::error('Image compression failed: ' . $e->getMessage());
+            Log::error('Image compression failed: ' . $e->getMessage());
             // Fallback: save original if compression fails
             $filename = 'raw_' . time() . '_' . $file->getClientOriginalName();
             return Storage::disk('public')->putFileAs('profile_photos', $file, $filename);
@@ -97,7 +97,7 @@ class ImageService
     public function getImageUrl(?string $path): string
     {
         if ($path) {
-            return Storage::disk('public')->url($path);
+            return asset('storage/' . $path);
         }
         
         return asset('images/default-avatar.png');

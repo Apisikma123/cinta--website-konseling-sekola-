@@ -14,6 +14,7 @@ class SchoolSeeder extends Seeder
             [
                 'city' => 'Jakarta',
                 'is_active' => true,
+                'secret_code_generated_at' => now(),
             ]
         );
         

@@ -37,4 +37,10 @@ class Testimonial extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
+
+    // Accessors
+    public function getSchoolNameAttribute()
+    {
+        return $this->report?->school?->name ?? $this->report?->nama_sekolah ?? 'Sekolah Tidak Diketahui';
+    }
 }

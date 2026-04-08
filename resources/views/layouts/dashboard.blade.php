@@ -280,6 +280,9 @@
     });
 </script>
 
+{{-- ★ Global Page Loading Overlay ★ --}}
+@include('components.loading')
+
 @stack('scripts')
 </body>
 </html>

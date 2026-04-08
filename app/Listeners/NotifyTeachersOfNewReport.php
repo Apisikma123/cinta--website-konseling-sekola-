@@ -4,7 +4,6 @@ namespace App\Listeners;
 
 use App\Events\ReportCreated;
 use App\Notifications\NewReportNotification;
-use App\Notifications\StudentTrackingCodeNotification;
 use App\Models\User;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
@@ -18,10 +17,11 @@ class NotifyTeachersOfNewReport implements ShouldQueue
     {
         $report = $event->report;
 
-        // select approved teachers only, filtered by school name
+        // select approved teachers only (approval_status must be 'approved'), filtered by school name
         $teachers = User::where('role', 'teacher')
-            ->where('is_approved', true)
+            ->where('approval_status', 'approved')
             ->where('school', $report->nama_sekolah)
+            ->where('is_active', true)  // Also ensure teachers are active
             ->get();
 
         if ($teachers->isEmpty()) {
@@ -33,11 +33,10 @@ class NotifyTeachersOfNewReport implements ShouldQueue
                 Notification::send($teachers, new NewReportNotification($report));
             }
 
-            // also notify the student (if email provided) about the created report
-            if (! empty($report->email_murid)) {
-                Notification::route('mail', $report->email_murid)
-                    ->notify(new StudentTrackingCodeNotification($report));
-            }
+            // CATATAN: Email ke murid (email_murid) sudah dikirim oleh
+            // ReportService::sendSuccessNotification() setelah laporan dibuat.
+            // Jangan kirim ulang di sini untuk mencegah duplikasi.
+
         } catch (\Throwable $e) {
             // don't block report creation if notification fails
             logger()->warning('Failed to send report notifications', [

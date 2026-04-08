@@ -64,7 +64,7 @@ class LoginRequest extends FormRequest
         if (config('recaptcha.enabled', false)) {
             $recaptchaService = new RecaptchaService();
             if (!$recaptchaService->verify($this->string('recaptcha_token'), 0.5)) {
-                \Log::warning('reCAPTCHA verification failed for login attempt', [
+                Log::warning('reCAPTCHA verification failed for login attempt', [
                     'email' => $this->email,
                     'ip' => $this->ip(),
                 ]);

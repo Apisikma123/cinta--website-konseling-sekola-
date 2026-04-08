@@ -12,7 +12,12 @@ class ApproveTeacherSeeder extends Seeder
         $teacher = User::where('email', 'guru@sistemcinta.com')->first();
         
         if ($teacher) {
-            $teacher->update(['is_approved' => true]);
+            // Update both fields for compatibility and new approval system
+            $teacher->update([
+                'is_approved' => true,
+                'approval_status' => 'approved',
+                'otp_verified' => true,
+            ]);
             $this->command->info("✓ Teacher approved: {$teacher->email}");
         } else {
             $this->command->warn("Teacher not found");

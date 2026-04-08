@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Log;
 
 class ReportCreateRequest extends FormRequest
 {
@@ -44,7 +45,7 @@ class ReportCreateRequest extends FormRequest
 
     protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
     {
-        \Log::warning('Report validation failed', [
+        Log::warning('Report validation failed', [
             'errors' => $validator->errors()->toArray(),
             'input' => $this->all(),
         ]);

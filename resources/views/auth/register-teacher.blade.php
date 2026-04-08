@@ -107,8 +107,10 @@
         </button>
 
         <!-- Loading Modal -->
-        <div id="registerLoadingModal" class="fixed inset-0 bg-white flex items-center justify-center z-50 hidden">
-            <x-loading message="Memproses pendaftaran..." />
+        <div id="registerLoadingModal" class="hidden fixed inset-0 bg-white z-50" style="display: none;">
+            <div class="flex items-center justify-center h-full">
+                <x-loading message="Memproses pendaftaran..." />
+            </div>
         </div>
     </div>
 </form>

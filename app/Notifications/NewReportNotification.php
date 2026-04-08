@@ -26,7 +26,7 @@ class NewReportNotification extends Notification implements ShouldQueue
         return (new MailMessage)
             ->subject('Laporan Baru Masuk')
             ->line('Terdapat laporan baru dengan kode: '.$this->report->tracking_code)
-            ->action('Lihat Laporan', route('teacher.reports.show', $this->report->id))
+            ->action('Lihat Laporan', url('/admin/reports/'.$this->report->id))
             ->line('Silakan masuk untuk mengambil tindakan.');
     }
 

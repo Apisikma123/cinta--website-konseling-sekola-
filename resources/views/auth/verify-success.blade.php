@@ -27,6 +27,19 @@
     </div>
 
     <p class="text-xs text-gray-400 mt-4">Terima kasih telah mendaftar.</p>
+
+    {{-- Navigation Buttons --}}
+    <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+        <a href="{{ route('login') }}"
+           class="px-6 py-2.5 bg-purple-600 text-white rounded-lg shadow-sm hover:bg-purple-900 transition-colors duration-200 font-medium text-center flex-1 sm:flex-none">
+            Ke Halaman Login
+        </a>
+
+        <a href="{{ route('home') }}"
+           class="px-6 py-2.5 bg-gray-200 text-gray-800 rounded-lg shadow-sm hover:bg-gray-300 transition-colors duration-200 font-medium text-center flex-1 sm:flex-none">
+            Kembali ke Home
+        </a>
+    </div>
 </div>
 
 <script>

@@ -24,7 +24,19 @@ class HomeController extends Controller
             'schools' => School::count(),
         ];
 
-        $testimonials = Testimonial::where('is_approved', 1)->where('is_visible', true)->latest()->limit(6)->get();
+        // Get testimonials grouped by school
+        $allTestimonials = Testimonial::where('is_approved', 1)
+            ->where('is_visible', true)
+            ->with(['report.school'])
+            ->latest()
+            ->get();
+
+        // Group by school name
+        $testimonials = $allTestimonials->groupBy(function ($t) {
+            return $t->report?->school?->name ?? $t->report?->nama_sekolah ?? 'Sekolah Lainnya';
+        })->map(function ($group) {
+            return $group->take(3); // Max 3 per school on homepage
+        });
 
         $total = Report::count() ?: 1;
         $jenisBreakdown = Report::select(DB::raw('COALESCE(jenis_laporan, "lainnya") as jenis'), DB::raw('COUNT(*) as cnt'))
@@ -37,7 +49,7 @@ class HomeController extends Controller
                 ];
             });
 
-        $counselors = User::where('role', '=', 'teacher')->where('is_active', '=', 1)->get();
+        $counselors = User::where('role', 'teacher')->where('is_active', 1)->get();
         
         // Teachers grouped by school for counselor section
         $teachers = User::where('role', 'teacher')

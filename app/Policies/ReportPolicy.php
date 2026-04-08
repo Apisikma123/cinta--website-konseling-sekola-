@@ -14,7 +14,7 @@ class ReportPolicy
     {
         // teachers can view their assigned reports; admins can view all
         if ($user->isAdmin()) return true;
-        if ($user->isTeacher() && $user->is_approved && $user->school && $report->nama_sekolah === $user->school) {
+        if ($user->isTeacher() && $user->approval_status === 'approved' && $user->school && $report->nama_sekolah === $user->school) {
             return true;
         }
         return false;
@@ -23,7 +23,7 @@ class ReportPolicy
     public function updateStatus(User $user, Report $report)
     {
         // only approved teachers can update reports from their school
-        if (! $user->isTeacher() || ! $user->is_approved) {
+        if (! $user->isTeacher() || $user->approval_status !== 'approved') {
             return false;
         }
 

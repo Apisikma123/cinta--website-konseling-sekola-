@@ -18,8 +18,10 @@ class UpdateUserLastActivity
     public function handle(Request $request, Closure $next): Response
     {
         // Update last_activity for authenticated users (using direct DB update for performance)
-        if (auth()->check()) {
-            User::where('id', auth()->id())->update(['last_activity' => now()]);
+        if (Auth::check()) {
+            /** @var \App\Models\User $authUser */
+            $authUser = Auth::user();
+            User::where('id', $authUser->id)->update(['last_activity' => now()]);
         }
 
         return $next($request);

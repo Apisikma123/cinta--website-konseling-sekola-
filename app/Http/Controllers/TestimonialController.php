@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Testimonial;
 use App\Models\Report;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class TestimonialController extends Controller
 {
@@ -39,14 +40,14 @@ class TestimonialController extends Controller
         $testimonial = Testimonial::findOrFail($id);
         $testimonial->update(['is_approved' => true]);
         // Clear cache so homepage shows updated testimonials
-        \Illuminate\Support\Facades\Cache::forget('home_testimonials');
+        Cache::forget('home_testimonials');
 
         // Also clear per-school cache if this testimonial has a related report with sekolah
         try {
             $school = $testimonial->report->nama_sekolah ?? null;
             if ($school) {
                 $perSchoolKey = 'home_testimonials_school_' . md5($school);
-                \Illuminate\Support\Facades\Cache::forget($perSchoolKey);
+                Cache::forget($perSchoolKey);
             }
         } catch (\Exception $e) {
             // ignore

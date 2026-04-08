@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*');
         $middleware->append(\App\Http\Middleware\UpdateUserLastActivity::class);
         $middleware->alias([
+            'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
             'role' => \App\Http\Middleware\CheckRole::class,
             'approved' => \App\Http\Middleware\CheckTeacherApproved::class,
         ]);

@@ -1,7 +1,7 @@
 @extends('layouts.teacher', ['title' => 'Detail Laporan'])
 
 @section('content')
-<div class="w-full px-4 sm:px-6 lg:px-8 space-y-5">
+<div class="w-full px-4 sm:px-6 lg:px-8 space-y-8 pb-10">
 
     {{-- Back + Title + Status --}}
     <div class="flex flex-col sm:flex-row sm:items-start gap-3">
@@ -59,9 +59,9 @@
             </div>
         </div>
 
-        <div class="p-5">
+        <div class="p-6 sm:p-8">
             {{-- Grid Info --}}
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 {{-- Pelapor --}}
                 <div class="bg-gray-50 rounded-xl p-4">
                     <div class="flex items-center gap-3 mb-2">
@@ -70,8 +70,13 @@
                         </div>
                         <span class="text-xs font-semibold text-gray-500 uppercase">Pelapor</span>
                     </div>
-                    <p class="font-bold text-gray-900">{{ $report->nama_murid }}</p>
-                    <p class="text-sm text-gray-500">{{ $report->kelas }}</p>
+                    @if($report->is_claimed)
+                        <p class="font-bold text-gray-900">{{ $report->nama_murid }}</p>
+                        <p class="text-sm text-gray-500">{{ $report->kelas }}</p>
+                    @else
+                        <p class="font-bold text-gray-700">{{ $report->censored_name }}</p>
+                        <p class="text-sm text-gray-400">{{ $report->censored_kelas }}</p>
+                    @endif
                 </div>
 
                 {{-- Sekolah --}}
@@ -106,10 +111,14 @@
                         </div>
                         <span class="text-xs font-semibold text-gray-500 uppercase">Kontak</span>
                     </div>
-                    @if($report->phone)
-                        <p class="font-bold text-gray-900">{{ $report->phone }}</p>
+                    @if($report->is_claimed)
+                        @if($report->phone)
+                            <p class="font-bold text-gray-900">{{ $report->phone }}</p>
+                        @else
+                            <p class="text-sm text-gray-400 italic">Tidak tersedia</p>
+                        @endif
                     @else
-                        <p class="text-sm text-gray-400 italic">Tidak tersedia</p>
+                        <p class="font-bold text-gray-700">{{ $report->censored_phone ?? '•••••••••' }}</p>
                     @endif
                 </div>
             </div>
@@ -120,32 +129,25 @@
                     <i class="fas fa-align-left text-purple-600"></i>
                     Deskripsi Laporan
                 </h4>
-                <div class="bg-gray-50 rounded-xl p-5">
-                    <p class="text-gray-700 leading-relaxed whitespace-pre-line">{{ $report->isi_laporan }}</p>
-                </div>
+                @if($report->is_claimed)
+                    <div class="bg-gray-50 rounded-xl p-5">
+                        <p class="text-gray-700 leading-relaxed whitespace-pre-line">{{ $report->isi_laporan }}</p>
+                    </div>
+                @else
+                    <div class="bg-gray-50 rounded-xl p-5 relative overflow-hidden">
+                        <p class="text-gray-300 leading-relaxed select-none blur-[4px]">{{ $report->isi_laporan }}</p>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center bg-white/70 backdrop-blur-[1px] gap-2">
+                            <i class="fas fa-lock text-2xl text-gray-400"></i>
+                            <p class="text-sm font-semibold text-gray-500">Ambil laporan untuk membaca isi</p>
+                        </div>
+                    </div>
+                @endif
             </div>
-
-            {{-- Lampiran --}}
-            @if($report->detail && $report->detail->evidence)
-            <div>
-                <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                    <i class="fas fa-paperclip text-purple-600"></i>
-                    Lampiran Bukti
-                </h4>
-                <a href="{{ asset('storage/' . $report->detail->evidence) }}" target="_blank" class="block max-w-md">
-                    <img src="{{ asset('storage/' . $report->detail->evidence) }}"
-                         class="w-full rounded-xl border border-gray-200 hover:border-purple-300 transition-colors shadow-sm" alt="Bukti laporan" loading="lazy">
-                </a>
-                <p class="text-xs text-gray-500 mt-2">
-                    <i class="fas fa-magnifying-glass text-[10px]"></i> Klik gambar untuk perbesar
-                </p>
-            </div>
-            @endif
         </div>
     </div>
 
     {{-- Card Chat & Kontak --}}
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {{-- Card Chat --}}
         <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
@@ -153,80 +155,157 @@
                 <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
                     <i class="fas fa-comments text-purple-600"></i>
                 </div>
-                <div>
+                <div class="flex-1">
                     <h3 class="font-bold text-gray-900">Komunikasi</h3>
                     <p class="text-xs text-gray-500">Hubungi murid via chat atau WhatsApp</p>
                 </div>
+                @if($report->is_claimed && $report->claimed_by === auth()->id())
+                    <span class="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <i class="fas fa-check-circle text-[10px]"></i> Laporan Anda
+                    </span>
+                @elseif($report->is_claimed)
+                    <span class="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full bg-orange-50 text-orange-700 border border-orange-200">
+                        <i class="fas fa-lock text-[10px]"></i> Diambil {{ $report->claimedBy->name }}
+                    </span>
+                @endif
             </div>
 
-            <div class="p-5">
-                {{-- Profil Murid Mini --}}
-                <div class="flex items-center gap-4 mb-5 p-4 bg-gray-50 rounded-xl">
+            <div class="p-6">
+                @if(!$report->is_claimed)
+                    {{-- BELUM DIKLAIM --}}
+                    <div style="border-radius:16px;overflow:hidden;border:1.5px solid #e9d5ff;">
+
+                        {{-- Top gradient banner --}}
+                        <div style="background:linear-gradient(145deg,#7c3aed 0%,#a855f7 50%,#ec4899 100%);padding:36px 24px 52px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:18px;position:relative;overflow:hidden;">
+
+                            {{-- Decorative circles --}}
+                            <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;background:rgba(255,255,255,0.07);border-radius:50%;pointer-events:none;"></div>
+                            <div style="position:absolute;bottom:-20px;left:-20px;width:80px;height:80px;background:rgba(255,255,255,0.07);border-radius:50%;pointer-events:none;"></div>
+
+                            {{-- Icon box (solid white bg guaranteed) --}}
+                            <div style="width:80px;height:80px;background:#ffffff;border-radius:22px;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 32px rgba(0,0,0,0.2);animation:claimFloat 3s ease-in-out infinite;flex-shrink:0;position:relative;z-index:2;">
+                                <i class="fas fa-user-shield" style="font-size:34px;color:#7c3aed;display:block;"></i>
+                            </div>
+
+                            <div style="position:relative;z-index:2;">
+                                <p style="font-weight:800;color:#fff;font-size:20px;margin:0 0 8px;letter-spacing:-0.3px;text-shadow:0 2px 8px rgba(0,0,0,0.2);">Laporan Belum Ditangani</p>
+                                <p style="font-size:13px;color:rgba(255,255,255,0.85);margin:0;max-width:260px;line-height:1.6;">Ambil laporan ini untuk membuka akses penuh — termasuk chat, data murid, dan kontak.</p>
+                            </div>
+
+                            {{-- Feature pills --}}
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;position:relative;z-index:2;">
+                                <span style="background:rgba(255,255,255,0.2);border:1.5px solid rgba(255,255,255,0.4);border-radius:999px;padding:5px 14px;font-size:11px;color:#fff;font-weight:700;display:inline-flex;align-items:center;gap:5px;">
+                                    <i class="fas fa-comments" style="font-size:10px;color:#fff;"></i> Chat
+                                </span>
+                                <span style="background:rgba(255,255,255,0.2);border:1.5px solid rgba(255,255,255,0.4);border-radius:999px;padding:5px 14px;font-size:11px;color:#fff;font-weight:700;display:inline-flex;align-items:center;gap:5px;">
+                                    <i class="fab fa-whatsapp" style="font-size:10px;color:#fff;"></i> WhatsApp
+                                </span>
+                                <span style="background:rgba(255,255,255,0.2);border:1.5px solid rgba(255,255,255,0.4);border-radius:999px;padding:5px 14px;font-size:11px;color:#fff;font-weight:700;display:inline-flex;align-items:center;gap:5px;">
+                                    <i class="fas fa-id-card" style="font-size:10px;color:#fff;"></i> Data Murid
+                                </span>
+                            </div>
+                        </div>
+
+                        {{-- Action card --}}
+                        <div style="background:#faf5ff;padding:28px 24px 28px;display:flex;flex-direction:column;align-items:center;gap:16px;margin-top:-12px;border-radius:20px 20px 0 0;border-top:1px solid rgba(124,58,237,0.1);">
+                            <form id="claimForm" action="{{ route('teacher.chat.claim', $report->tracking_code) }}" method="POST" style="width:100%;">
+                                @csrf
+                                <button type="button" onclick="confirmClaim()" id="claimBtn"
+                                    style="width:100%;display:flex;align-items:center;justify-content:center;gap:12px;padding:16px 24px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-weight:700;font-size:15px;border:none;border-radius:14px;cursor:pointer;box-shadow:0 8px 28px rgba(124,58,237,0.35);transition:all 0.25s cubic-bezier(0.4,0,0.2,1);letter-spacing:0.2px;">
+                                    <span style="width:38px;height:38px;background:rgba(255,255,255,0.2);border-radius:10px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                        <i class="fas fa-hand-holding-heart" style="font-size:17px;color:#fff;"></i>
+                                    </span>
+                                    <span>Ambil Laporan Ini</span>
+                                    <i class="fas fa-arrow-right" style="font-size:13px;color:rgba(255,255,255,0.7);margin-left:auto;transition:transform 0.2s;" id="claimArrow"></i>
+                                </button>
+                            </form>
+                            <p style="font-size:12px;color:#7c3aed;margin:0;text-align:center;opacity:0.7;display:flex;align-items:center;gap:6px;">
+                                <i class="fas fa-lock" style="font-size:11px;"></i>
+                                Setelah diambil, Anda bertanggung jawab atas penanganan laporan ini.
+                            </p>
+                        </div>
+                    </div>
+
+                    <style>
+                        @keyframes claimFloat {
+                            0%,100%{transform:translateY(0);}
+                            50%{transform:translateY(-8px);}
+                        }
+                        #claimBtn:hover {
+                            transform:translateY(-3px) scale(1.015) !important;
+                            box-shadow:0 16px 40px rgba(124,58,237,0.45) !important;
+                        }
+                        #claimBtn:active { transform:scale(0.97) !important; }
+                    </style>
+                @else
+                    {{-- SUDAH DIKLAIM: Tampilkan profil + tombol komunikasi --}}
                     @php
                         $studentName = $report->nama_murid ?? 'Anonim';
                         $initials = collect(explode(' ', $studentName))->map(fn($p) => strtoupper(substr($p, 0, 1)))->take(2)->join('');
                     @endphp
-                    <div class="w-14 h-14 bg-purple-600 rounded-xl flex items-center justify-center text-white text-xl font-bold shadow-md">
-                        {{ $initials }}
-                    </div>
-                    <div class="flex-1">
-                        <h4 class="font-bold text-gray-900">{{ $studentName }}</h4>
-                        <div class="flex items-center gap-2 mt-1">
-                            <span class="relative flex h-2 w-2">
-                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-400 opacity-75" id="onlinePing"></span>
-                                <span class="relative inline-flex rounded-full h-2 w-2 bg-purple-400/30" id="onlineStatus"></span>
-                            </span>
-                            <span id="onlineText" class="text-xs text-gray-500">Memeriksa status...</span>
+                    <div class="flex items-center gap-4 mb-6 p-4 bg-gray-50 rounded-xl">
+                        <div class="w-14 h-14 bg-purple-600 rounded-xl flex items-center justify-center text-white text-xl font-bold shadow-md">
+                            {{ $initials }}
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-bold text-gray-900">{{ $studentName }}</h4>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="relative flex h-2 w-2">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-400 opacity-75" id="onlinePing"></span>
+                                    <span class="relative inline-flex rounded-full h-2 w-2 bg-purple-400/30" id="onlineStatus"></span>
+                                </span>
+                                <span id="onlineText" class="text-xs text-gray-500">Memeriksa status...</span>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                {{-- Button Actions --}}
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {{-- Chat Langsung --}}
-                    <a href="{{ route('chat.index', $report->tracking_code) }}" target="_blank"
-                       class="flex items-center justify-center gap-3 px-5 py-4 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-all shadow-lg shadow-purple-200 group">
-                        <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                            <i class="fas fa-comment-dots text-xl"></i>
-                        </div>
-                        <div class="text-left">
-                            <p class="font-bold">Chat Langsung</p>
-                            <p class="text-xs text-purple-200">Buka di halaman baru</p>
-                        </div>
-                    </a>
-
-                    {{-- Via WA --}}
-                    @if($report->phone)
-                        <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $report->phone) }}" target="_blank"
-                           class="flex items-center justify-center gap-3 px-5 py-4 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-200 group">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <a href="{{ route('teacher.chat.index', $report->tracking_code) }}" target="_blank"
+                           onclick="document.getElementById('teacher-chat-badge')?.remove()"
+                           class="relative flex items-center justify-center gap-3 px-5 py-4 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-all shadow-lg shadow-purple-200 group">
+                            @if(isset($unreadChats) && $unreadChats > 0)
+                                <span id="teacher-chat-badge" class="absolute -top-3 -right-3 bg-red-500 text-white text-[11px] font-bold px-2.5 py-1 z-10 flex items-center justify-center rounded-full border-2 border-white shadow-sm">{{ $unreadChats }} Pesan Baru</span>
+                            @endif
                             <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                                <i class="fab fa-whatsapp text-xl"></i>
+                                <i class="fas fa-comment-dots text-xl"></i>
                             </div>
                             <div class="text-left">
-                                <p class="font-bold">Via WhatsApp</p>
-                                <p class="text-xs text-emerald-100">{{ $report->phone }}</p>
+                                <p class="font-bold">Chat Langsung</p>
+                                <p class="text-xs text-purple-200">Buka di halaman baru</p>
                             </div>
                         </a>
-                    @else
-                        <div class="flex items-center justify-center gap-3 px-5 py-4 bg-gray-100 text-gray-400 rounded-xl cursor-not-allowed">
-                            <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center">
-                                <i class="fab fa-whatsapp text-xl"></i>
-                            </div>
-                            <div class="text-left">
-                                <p class="font-bold">Via WhatsApp</p>
-                                <p class="text-xs">Nomor tidak tersedia</p>
-                            </div>
-                        </div>
-                    @endif
-                </div>
 
-                {{-- Info --}}
-                <div class="mt-4 p-3 bg-amber-50 rounded-lg flex items-start gap-3">
-                    <i class="fas fa-info-circle text-amber-500 mt-0.5"></i>
-                    <p class="text-xs text-amber-700">
-                        Chat internal akan dihapus otomatis dalam 3 hari. Gunakan WhatsApp untuk komunikasi penting.
-                    </p>
-                </div>
+                        @if($report->phone)
+                            <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $report->phone) }}" target="_blank"
+                               class="flex items-center justify-center gap-3 px-5 py-4 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-200 group">
+                                <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <i class="fab fa-whatsapp text-xl"></i>
+                                </div>
+                                <div class="text-left">
+                                    <p class="font-bold">Via WhatsApp</p>
+                                    <p class="text-xs text-emerald-100">{{ $report->phone }}</p>
+                                </div>
+                            </a>
+                        @else
+                            <div class="flex items-center justify-center gap-3 px-5 py-4 bg-gray-100 text-gray-400 rounded-xl cursor-not-allowed">
+                                <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center">
+                                    <i class="fab fa-whatsapp text-xl"></i>
+                                </div>
+                                <div class="text-left">
+                                    <p class="font-bold">Via WhatsApp</p>
+                                    <p class="text-xs">Nomor tidak tersedia</p>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="mt-5 p-4 bg-amber-50 rounded-xl flex items-start gap-3">
+                        <i class="fas fa-info-circle text-amber-500 mt-0.5"></i>
+                        <p class="text-xs text-amber-700">
+                            Chat internal akan dihapus otomatis dalam 3 hari. Gunakan WhatsApp untuk komunikasi penting.
+                        </p>
+                    </div>
+                @endif
             </div>
         </div>
 
@@ -242,7 +321,7 @@
                 </div>
             </div>
 
-            <div class="p-5 space-y-4">
+            <div class="p-6 space-y-5">
                 {{-- Email --}}
                 <div class="flex items-start gap-3">
                     <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -250,12 +329,16 @@
                     </div>
                     <div class="flex-1 min-w-0">
                         <p class="text-xs text-gray-500 mb-1">Email Murid</p>
-                        @if($report->email_murid)
-                            <a href="mailto:{{ $report->email_murid }}" class="text-sm font-medium text-blue-600 hover:underline truncate block">
-                                {{ $report->email_murid }}
-                            </a>
+                        @if($report->is_claimed)
+                            @if($report->email_murid)
+                                <a href="mailto:{{ $report->email_murid }}" class="text-sm font-medium text-blue-600 hover:underline truncate block">
+                                    {{ $report->email_murid }}
+                                </a>
+                            @else
+                                <p class="text-sm text-gray-400 italic">Tidak tersedia</p>
+                            @endif
                         @else
-                            <p class="text-sm text-gray-400 italic">Tidak tersedia</p>
+                            <p class="text-sm font-medium text-gray-600">{{ $report->censored_email ?? '•••@•••.•••' }}</p>
                         @endif
                     </div>
                 </div>
@@ -291,6 +374,31 @@
 
 @push('scripts')
 <script>
+    function confirmClaim() {
+        Swal.fire({
+            title: 'Ambil Laporan Ini?',
+            html: `<div class="text-left space-y-2 text-sm text-gray-600">
+                <p>Dengan mengambil laporan ini, Anda menyatakan:</p>
+                <ul class="list-disc pl-5 space-y-1 mt-2">
+                    <li>Anda bertanggung jawab menangani kasus ini</li>
+                    <li>Data murid akan terbuka hanya untuk Anda</li>
+                    <li>Guru lain tidak dapat mengambil laporan yang sudah Anda ambil</li>
+                </ul>
+            </div>`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: '<i class="fas fa-hand-holding-heart mr-1"></i> Ya, Ambil Laporan',
+            cancelButtonText: 'Batal',
+            reverseButtons: true,
+            confirmButtonColor: '#10b981',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('claimForm').submit();
+            }
+        });
+    }
+
+    @if($report->is_claimed)
     const trackingCode = '{{ $report->tracking_code }}';
     const onlineStatus = document.getElementById('onlineStatus');
     const onlinePing = document.getElementById('onlinePing');
@@ -298,24 +406,15 @@
 
     async function updatePresence() {
         try {
-            // Track activity
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
             fetch('/api/chat/active', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken
-                },
-                body: JSON.stringify({
-                    report_id: {{ $report->id }},
-                    is_student: false
-                })
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+                body: JSON.stringify({ report_id: {{ $report->id }}, is_student: false })
             }).catch(() => {});
 
-            // Get presence
             const presenceResponse = await fetch(`/api/presence/${trackingCode}`);
             const presenceData = await presenceResponse.json();
-
             const isStudentOnline = presenceData.student;
 
             if (isStudentOnline) {
@@ -332,13 +431,13 @@
                 onlineText.classList.add('text-gray-500');
             }
         } catch (error) {
-            onlineText.textContent = 'Status tidak diketahui';
+            if (onlineText) onlineText.textContent = 'Status tidak diketahui';
         }
     }
 
-    // Initial load and polling
     updatePresence();
     setInterval(updatePresence, 5000);
+    @endif
 </script>
 @endpush
 @endsection

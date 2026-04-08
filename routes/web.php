@@ -21,22 +21,27 @@ Route::middleware('web')->group(function () {
     // Student Report Routes (Public)
     Route::get('/create', [ReportController::class, 'createForm'])->name('student.create');
     Route::post('/report', [ReportController::class, 'create'])
-        ->middleware('throttle:20,1')
+        ->middleware('throttle:200,1')
         ->name('report.store');
     Route::get('/result/{tracking_code}', [ReportController::class, 'result'])->name('result');
+    Route::get('/verify-laporan', [ReportController::class, 'verify'])->name('report.verify');
     Route::get('/track', [ReportController::class, 'showTrackForm'])->name('student.track');
     Route::get('/track/{tracking_code}', [ReportController::class, 'track'])->name('track.status');
     
     // Testimonial Routes
     Route::post('/testimonial', [TestimonialController::class, 'store'])->name('testimonial.store');
     
-    // Student Chat Routes
+    // MURID - Student Chat Routes
     Route::get('/chat-murid/{tracking_code}', [ChatController::class, 'studentIndex'])->name('chat.murid');
-    Route::post('/chat-murid/{tracking_code}', [ChatController::class, 'store'])
-        ->middleware('throttle:30,1')
-        ->name('chat.murid.store');
+    Route::post('/chat-murid/{tracking_code}', [ChatController::class, 'store'])->name('chat.murid.store');
     Route::get('/chat-murid/{tracking_code}/messages', [ChatController::class, 'messages'])->name('chat.murid.messages');
+    Route::get('/chat-murid/{tracking_code}/read-status', [ChatController::class, 'readStatus'])->name('chat.murid.read-status');
     Route::post('/chat-murid/{tracking_code}/messages/{id}/mark-read', [ChatController::class, 'markAsRead'])->name('chat.murid.mark-read');
+    Route::patch('/chat-murid/{tracking_code}/messages/{id}', [ChatController::class, 'editMessage'])->name('chat.murid.edit');
+    Route::delete('/chat-murid/{tracking_code}/messages/{id}', [ChatController::class, 'deleteMessage'])->name('chat.murid.delete');
+    Route::post('/chat-murid/{tracking_code}/typing', [ChatController::class, 'typing'])->name('chat.murid.typing');
+    Route::get('/chat-murid/{tracking_code}/typing', [ChatController::class, 'getTyping'])->name('chat.murid.get-typing');
+    Route::get('/chat-murid/{tracking_code}/status', [ChatController::class, 'chatStatus'])->name('chat.murid.status');
     
     // WhatsApp Integration
     Route::get('/chat/{tracking_code}/whatsapp', [ChatController::class, 'whatsapp'])->name('chat.whatsapp');
@@ -50,27 +55,29 @@ Route::middleware('guest')->group(function () {
     // Login Routes (Teacher/Admin)
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])
-        ->middleware('throttle:5,1')
+        ->middleware('throttle:50,1')
         ->name('login.store');
     Route::get('/login/otp', [AuthController::class, 'showLoginOtpForm'])->name('login.otp.form');
     Route::post('/login/otp', [AuthController::class, 'verifyLoginOtp'])
-        ->middleware('throttle:5,1')
+        ->middleware('throttle:50,1')
         ->name('login.otp');
     
     // Teacher Registration with Secret Verification
     Route::get('/register/teacher', [AuthController::class, 'showRegisterForm'])->name('register.teacher.form');
     Route::post('/register/teacher', [AuthController::class, 'register'])
-        ->middleware('throttle:5,1')
+        ->middleware('throttle:50,1')
         ->name('register.teacher');
     
     // OTP Verification Routes
     Route::get('/verify-otp', [AuthController::class, 'showOtpForm'])->name('verify.otp.form');
     Route::post('/verify-otp', [AuthController::class, 'verifyOtp'])->name('verify.otp');
-    Route::post('/resend-otp', [AuthController::class, 'resendOtp'])
-        ->middleware('throttle:5,1')
-        ->name('resend.otp');
     Route::get('/verify-success', [AuthController::class, 'showVerifySuccess'])->name('verify.success');
 });
+
+// Resend OTP - outside guest middleware (tetap bisa diakses tanpa auth)
+Route::post('/resend-otp', [AuthController::class, 'resendOtp'])
+    ->middleware('throttle:50,1')
+    ->name('resend.otp');
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
@@ -114,14 +121,27 @@ Route::middleware(['auth', 'role:teacher', \App\Http\Middleware\CheckTeacherAppr
     Route::get('/secret-management', [TeacherController::class, 'secretManagement'])->name('secret-management');
     Route::post('/secret-management/generate', [TeacherController::class, 'generateSecretCode'])->name('secret.regenerate');
     
-    // Chat Routes
-    Route::get('/chat/{tracking_code}', [ChatController::class, 'index'])->name('chat.index');
-    Route::post('/chat/{tracking_code}', [ChatController::class, 'store'])
-        ->middleware('throttle:30,1')
-        ->name('chat.store');
-    Route::get('/chat/{tracking_code}/messages', [ChatController::class, 'messages'])->name('chat.messages');
-    Route::post('/chat/{tracking_code}/messages/{id}/mark-read', [ChatController::class, 'markAsRead'])->name('chat.mark-read');
 });
+
+// ============================================
+// TEACHER CHAT ROUTES (Auth only - in teacher group)
+// ============================================
+
+Route::middleware(['auth'])->prefix('teacher')->name('teacher.')->group(function () {
+    Route::get('/chat/{tracking_code}', [ChatController::class, 'index'])->name('chat.index');
+    Route::post('/chat/{tracking_code}', [ChatController::class, 'store'])->name('chat.store');
+    Route::post('/chat/{tracking_code}/claim', [ChatController::class, 'claimReport'])->name('chat.claim');
+    Route::get('/chat/{tracking_code}/messages', [ChatController::class, 'messages'])->name('chat.messages');
+    Route::get('/chat/{tracking_code}/read-status', [ChatController::class, 'readStatus'])->name('chat.read-status');
+    Route::post('/chat/{tracking_code}/messages/{id}/mark-read', [ChatController::class, 'markAsRead'])->name('chat.mark-read');
+    Route::patch('/chat/{tracking_code}/messages/{id}', [ChatController::class, 'editMessage'])->name('chat.edit');
+    Route::delete('/chat/{tracking_code}/messages/{id}', [ChatController::class, 'deleteMessage'])->name('chat.delete');
+    Route::post('/chat/{tracking_code}/typing', [ChatController::class, 'typing'])->name('chat.typing');
+    Route::get('/chat/{tracking_code}/typing', [ChatController::class, 'getTyping'])->name('chat.get-typing');
+    Route::get('/chat/{tracking_code}/status', [ChatController::class, 'chatStatus'])->name('chat.status');
+});
+
+Route::get('/api/chat/unread/{tracking_code}', [ChatController::class, 'unreadCount'])->name('api.chat.unread');
 
 // ============================================
 // ADMIN ROUTES (Protected)

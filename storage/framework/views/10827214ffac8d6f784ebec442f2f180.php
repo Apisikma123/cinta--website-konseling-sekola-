@@ -178,7 +178,7 @@
                     </label>
                     <input type="tel" name="phone"
                            class="w-full px-4 py-3 rounded-lg border border-purple-200 focus:ring-2 focus:ring-purple-300 focus:border-transparent outline-none transition"
-                           placeholder="contoh: 081234567890">
+                           placeholder="contoh: 621234567890">
                 </div>
             </div>
 
@@ -191,8 +191,9 @@
     </form>
     
     <!-- Loading Modal untuk form submission -->
-    <div id="loadingModal" class="fixed inset-0 bg-white flex items-center justify-center z-50 hidden">
-        <?php if (isset($component)) { $__componentOriginal84bc13f46ede078ae58666238de3da00 = $component; } ?>
+    <div id="loadingModal" class="hidden fixed inset-0 bg-white z-50" style="display: none;">
+        <div class="flex items-center justify-center h-full">
+            <?php if (isset($component)) { $__componentOriginal84bc13f46ede078ae58666238de3da00 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal84bc13f46ede078ae58666238de3da00 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.loading','data' => ['message' => 'Memproses laporan Anda...']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('loading'); ?>
@@ -212,14 +213,16 @@
 <?php $component = $__componentOriginal84bc13f46ede078ae58666238de3da00; ?>
 <?php unset($__componentOriginal84bc13f46ede078ae58666238de3da00); ?>
 <?php endif; ?>
+        </div>
     </div>
     </div>
 </div>
 
 <!-- MODAL POPUP -->
-<div id="codeModal" class="fixed inset-0 bg-white flex items-center justify-center z-50 hidden">
-    <div class="bg-white rounded-2xl p-6 w-11/12 max-w-md mx-4 animate-fade-in">
-        <div class="text-center">
+<div id="codeModal" class="hidden fixed inset-0 bg-white z-50" style="display: none;">
+    <div class="flex items-center justify-center h-full">
+        <div class="bg-white rounded-2xl p-6 w-11/12 max-w-md mx-4 animate-fade-in">
+            <div class="text-center">
             <div class="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i class="fas fa-check text-green-600 text-xl"></i>
             </div>

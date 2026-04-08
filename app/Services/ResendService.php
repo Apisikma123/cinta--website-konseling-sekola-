@@ -7,14 +7,14 @@ use Illuminate\Support\Facades\Log;
 
 class ResendService
 {
-    private string $apiKey;
+    private ?string $apiKey;
     private string $fromAddress;
     private string $fromName;
 
     public function __construct()
     {
-        $this->apiKey = config('services.resend.api_key', env('RESEND_API_KEY'));
-        $this->fromAddress = config('services.resend.from_address', env('RESEND_FROM_ADDRESS', env('MAIL_FROM_ADDRESS')));
+        $this->apiKey = config('services.resend.key') ?? env('RESEND_API_KEY');
+        $this->fromAddress = config('services.resend.from_address', env('RESEND_FROM_ADDRESS', env('MAIL_FROM_ADDRESS', 'sistemcinta@telkomcare.my.id')));
         $this->fromName = config('services.resend.from_name', env('RESEND_FROM_NAME', env('MAIL_FROM_NAME', 'Sistem Cinta')));
     }
 
@@ -28,6 +28,12 @@ class ResendService
      */
     public function send(string $to, string $subject, string $html): bool
     {
+        // Return false if Resend API key is not configured
+        if (!$this->apiKey) {
+            Log::warning('Resend API key not configured, cannot send email to ' . $to);
+            return false;
+        }
+
         try {
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->apiKey,
@@ -92,6 +98,12 @@ class ResendService
      */
     public function sendPlainText(string $to, string $subject, string $text): bool
     {
+        // Return false if Resend API key is not configured
+        if (!$this->apiKey) {
+            Log::warning('Resend API key not configured, cannot send plain text email to ' . $to);
+            return false;
+        }
+
         try {
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->apiKey,

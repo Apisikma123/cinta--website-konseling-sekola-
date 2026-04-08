@@ -49,10 +49,10 @@ class ReportController extends Controller
             ], 422);
         }
 
-        $school = School::findOrFail($request->school_id);
+        $school = School::findOrFail($request->input('school_id'));
         
         // Validate secret code
-        if (!$school->secret_code || $request->secret_code !== $school->secret_code) {
+        if (!$school->secret_code || $request->input('secret_code') !== $school->secret_code) {
             return response()->json([
                 'error' => 'Kode akses yang Anda masukkan salah. Mohon tanya kembali ke guru Anda.'
             ], 422);
@@ -69,13 +69,13 @@ class ReportController extends Controller
         ]);
         $data['jenis_laporan'] = $request->input('jenis_laporan');
         $data['nama_sekolah'] = $school->name;
-        $data['school_id'] = $request->school_id;
+        $data['school_id'] = $request->input('school_id');
 
         try {
             $report = $reportService->create($data);
             return response()->json(['tracking_code' => $report->tracking_code], 200);
         } catch (\Exception $e) {
-            \Log::error('Report creation error: ' . $e->getMessage());
+            Log::error('Report creation error: ' . $e->getMessage());
             return response()->json([
                 'error' => 'Gagal membuat laporan. Silakan coba lagi.'
             ], 500);
@@ -84,7 +84,7 @@ class ReportController extends Controller
 
     public function createForm()
     {
-        $schools = School::where('is_active', true)->orderBy('name')->get();
+        $schools = School::where('is_active', true)->orderBy('name', 'asc')->get();
         return view('student.create', compact('schools'));
     }
 
@@ -119,9 +119,10 @@ class ReportController extends Controller
 
         $this->authorize('updateStatus', $report);
 
-        $guruId = auth()->id();
+        /** @var \App\Models\User $authUser */
+        $guruId = Auth::id();
 
-        $reportService->changeStatus($report, $request->status, $guruId);
+        $reportService->changeStatus($report, $request->input('status'), $guruId);
 
         return back()->with('success', 'Status laporan berhasil diperbarui.');
     }

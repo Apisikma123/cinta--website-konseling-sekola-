@@ -298,5 +298,8 @@
             });
         });
     </script>
+
+    
+    <?php echo $__env->make('components.loading', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 </body>
 </html><?php /**PATH D:\ngoding\sistem-cinta\resources\views/layouts/student.blade.php ENDPATH**/ ?>

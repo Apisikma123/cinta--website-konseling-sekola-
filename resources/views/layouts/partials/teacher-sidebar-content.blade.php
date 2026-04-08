@@ -44,9 +44,14 @@ $initials = strtoupper(substr($nameParts[0] ?? '', 0, 1)) . strtoupper(substr($n
     </a>
 
     <a href="{{ route('teacher.reports.index') }}" @click="sidebarOpen = false"
-       class="flex items-center gap-3 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors duration-150 {{ request()->routeIs('teacher.reports.*') ? 'bg-purple-100 text-purple-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
-        <i class="fas fa-file-lines w-5 text-center {{ request()->routeIs('teacher.reports.*') ? 'text-purple-600' : 'text-gray-400' }}"></i>
-        <span>Laporan</span>
+       class="flex items-center justify-between py-2.5 px-4 rounded-lg text-sm font-medium transition-colors duration-150 {{ request()->routeIs('teacher.reports.*') ? 'bg-purple-100 text-purple-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+        <div class="flex items-center gap-3">
+            <i class="fas fa-file-lines w-5 text-center {{ request()->routeIs('teacher.reports.*') ? 'text-purple-600' : 'text-gray-400' }}"></i>
+            <span>Laporan</span>
+        </div>
+        @if(isset($totalUnreadChats) && $totalUnreadChats > 0)
+            <span class="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">{{ $totalUnreadChats }}</span>
+        @endif
     </a>
 
     <a href="{{ route('teacher.testimonials') }}" @click="sidebarOpen = false"

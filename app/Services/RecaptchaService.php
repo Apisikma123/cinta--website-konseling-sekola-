@@ -57,7 +57,7 @@ class RecaptchaService
 
             return true;
         } catch (\Exception $e) {
-            \Log::error('reCAPTCHA verification failed: ' . $e->getMessage());
+            Log::error('reCAPTCHA verification failed: ' . $e->getMessage());
             return false;
         }
     }
