@@ -5,9 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\School;
 use App\Models\TeacherApproval;
-use App\Services\OtpService;
-use App\Services\RecaptchaService;
 use App\Models\OtpVerification;
+use App\Services\OtpService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -17,12 +16,6 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    private RecaptchaService $recaptchaService;
-
-    public function __construct(RecaptchaService $recaptchaService)
-    {
-        $this->recaptchaService = $recaptchaService;
-    }
 
     // Tampilkan form daftar guru
     public function showRegisterForm()
@@ -43,25 +36,7 @@ class AuthController extends Controller
             'password' => 'required|string|min:6|confirmed',
         ];
 
-        // Only require recaptcha_token if reCAPTCHA is enabled
-        if (config('recaptcha.enabled', false)) {
-            $rules['recaptcha_token'] = 'required|string';
-        }
-
         $request->validate($rules);
-
-        // Verify reCAPTCHA token only if enabled
-        if (config('recaptcha.enabled', false)) {
-            if (!$this->recaptchaService->verify($request->string('recaptcha_token'), 0.5)) {
-                Log::warning('reCAPTCHA verification failed for registration attempt', [
-                    'email' => $request->input('email'),
-                    'ip' => $request->ip(),
-                ]);
-                throw ValidationException::withMessages([
-                    'email' => 'Verifikasi keamanan gagal. Silakan coba lagi.',
-                ]);
-            }
-        }
 
         // Cek jawaban rahasia (hanya guru yang tahu)
         if ($request->input('verification_answer') !== env('TEACHER_SECRET_ANSWER', 'rahasia123')) {
@@ -231,23 +206,7 @@ class AuthController extends Controller
             'password' => 'required',
         ];
 
-        // Only require recaptcha_token if reCAPTCHA is enabled
-        if (config('recaptcha.enabled', false)) {
-            $rules['recaptcha_token'] = 'required|string';
-        }
-
         $request->validate($rules);
-
-        // Verify reCAPTCHA token only if enabled
-        if (config('recaptcha.enabled', false)) {
-            if (!$this->recaptchaService->verify($request->string('recaptcha_token'), 0.5)) {
-                Log::warning('reCAPTCHA verification failed for login attempt', [
-                    'email' => $request->input('email'),
-                    'ip' => $request->ip(),
-                ]);
-                return back()->withErrors(['email' => 'Verifikasi keamanan gagal. Silakan coba lagi.']);
-            }
-        }
 
         // Cek credentials tanpa login
         $user = User::where('email', $request->input('email'))->first();

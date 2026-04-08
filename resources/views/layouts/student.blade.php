@@ -9,7 +9,7 @@
     <link rel="icon" type="image/png" href="{{ asset('img/icon.png') }}">
     <link rel="shortcut icon" type="image/png" href="{{ asset('img/icon.png') }}">
 
-    <title>{{ config('app.name', 'Sistem BK Digital') }}</title>
+    <title>{{ config('app.name', 'CINTA - Curahan Inovatif Anak Tanpa Batas') }}</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -139,12 +139,12 @@
                 
                 <!-- Logo & Brand -->
                 <div class="flex items-center gap-2 md:gap-3">
-                    <img src="{{ asset('img/icon.png') }}" alt="Logo Sistem BK" class="w-9 h-9 md:w-11 md:h-11 object-contain">
+                    <img src="{{ asset('img/icon.png') }}" alt="Logo CINTA" class="w-9 h-9 md:w-11 md:h-11 object-contain">
                     <div class="flex flex-col -space-y-1">
                         <span class="text-base md:text-xl font-bold text-gray-900 leading-tight">
-                            Sistem<span class="text-purple-600">BK</span>
+                            CINTA
                         </span>
-                        <span class="text-[10px] md:text-xs text-gray-500 font-medium hidden sm:block">Digital Counseling</span>
+                        <span class="text-[10px] md:text-xs text-gray-500 font-medium hidden sm:block">Curahan Inovatif Anak Tanpa Batas</span>
                     </div>
                 </div>
 

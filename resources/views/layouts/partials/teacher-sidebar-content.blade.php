@@ -7,7 +7,7 @@ $initials = strtoupper(substr($nameParts[0] ?? '', 0, 1)) . strtoupper(substr($n
 <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200">
     <div class="flex items-center gap-3">
         <img src="{{ asset('img/icon.png') }}" alt="Logo" class="w-8 h-8 rounded-lg object-contain flex-shrink-0">
-        <span class="text-sm font-bold text-gray-900 tracking-tight">BK Panel</span>
+        <span class="text-sm font-bold text-gray-900 tracking-tight">CINTA Panel</span>
     </div>
     <button @click="sidebarOpen = false" class="lg:hidden p-1 text-gray-400 hover:text-gray-600 rounded">
         <i class="fas fa-xmark text-base"></i>

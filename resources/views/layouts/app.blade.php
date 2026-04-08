@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Sistem Laporan BK</title>
+    <title>CINTA - Curahan Inovatif Anak Tanpa Batas</title>
     
     <!-- Font Poppins -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29,7 +29,7 @@
         <div class="max-w-md mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center">
                 <img src="{{ asset('img/icon.png') }}" alt="Logo" class="w-8 h-8 mr-2">
-                <span class="text-lg font-bold text-purple-800">Sistem BK</span>
+                <span class="text-lg font-bold text-purple-800">CINTA</span>
             </div>
             
             <!-- TOMBOL LOGIN (hanya muncul di halaman guest) -->
@@ -76,7 +76,7 @@
 
     <!-- FOOTER -->
     <footer class="max-w-md mx-auto px-4 py-6 text-center text-xs text-purple-600">
-        © {{ date('Y') }} Sistem Laporan BK • Privasi Terjamin
+        © {{ date('Y') }} CINTA • Privasi Terjamin
     </footer>
 
     <script>

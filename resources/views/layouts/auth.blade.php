@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $title ?? 'Sistem Laporan BK' }}</title>
+    <title>{{ $title ?? 'Cinta Login/Register' }}</title>
     
     <!-- Font Poppins -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,11 +17,6 @@
     <!-- SweetAlert2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     
-    @if(config('recaptcha.enabled', false))
-    <!-- Google reCAPTCHA v3 -->
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-    @endif
-    
     @vite(['resources/css/app.css'])
     <link rel="icon" href="{{ asset('img/icon.png') }}" type="image/png">
     
@@ -29,11 +24,6 @@
         body { font-family: 'Poppins', sans-serif; }
         .fade-in { opacity: 0; animation: fadeIn 0.5s ease forwards; }
         @keyframes fadeIn { to { opacity: 1; } }
-        
-        /* reCAPTCHA badge styling */
-        .grecaptcha-badge {
-            visibility: hidden;
-        }
 
         /* Toast Notification */
         .toast {
@@ -100,7 +90,7 @@
     <div class="w-full max-w-6xl mx-auto">
         <div class="text-center mb-6 sm:mb-8 fade-in">
             <img src="{{ asset('img/icon.png') }}" alt="Logo" class="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4">
-            <h1 class="text-xl sm:text-2xl font-bold text-purple-800">{{ $title ?? 'Sistem Laporan BK' }}</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-purple-800">{{ $title ?? 'Cinta Login/Register' }}</h1>
         </div>
         
         <main class="bg-white rounded-2xl shadow-lg p-6 sm:p-8 border border-purple-100 fade-in">
@@ -108,7 +98,7 @@
         </main>
         
         <footer class="text-center mt-4 sm:mt-6 text-xs text-purple-600">
-            © {{ date('Y') }} Sistem Laporan BK
+            © {{ date('Y') }} Cinta Login/Register
         </footer>
     </div>
 

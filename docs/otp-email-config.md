@@ -15,9 +15,9 @@ Sistem OTP menggunakan **dual-mailer** approach:
 MAIL_MAILER=resend
 RESEND_API_KEY=re_Wv9Y7EDb_7KJJ3uX357NdCtSvwz48byFY
 RESEND_FROM_ADDRESS=sistemcinta@telkomcare.my.id
-RESEND_FROM_NAME="Sistem Cinta"
+RESEND_FROM_NAME="CINTA"
 MAIL_FROM_ADDRESS=sistemcinta@telkomcare.my.id
-MAIL_FROM_NAME="Sistem Cinta"
+MAIL_FROM_NAME="CINTA"
 ```
 
 ### Option 2: Gmail SMTP
@@ -30,7 +30,7 @@ MAIL_USERNAME=your-email@gmail.com
 MAIL_PASSWORD=your-app-password
 MAIL_ENCRYPTION=tls
 MAIL_FROM_ADDRESS=your-email@gmail.com
-MAIL_FROM_NAME="Sistem Cinta"
+MAIL_FROM_NAME="CINTA"
 ```
 
 **IMPORTANT**: Untuk Gmail, gunakan **App Password** bukan password biasa!
@@ -51,7 +51,7 @@ MAIL_USERNAME=sistemcinta@telkomcare.my.id
 MAIL_PASSWORD=your-actual-password
 MAIL_ENCRYPTION=tls
 MAIL_FROM_ADDRESS=sistemcinta@telkomcare.my.id
-MAIL_FROM_NAME="Sistem Cinta"
+MAIL_FROM_NAME="CINTA"
 ```
 
 ## Setelah Update .env
@@ -69,7 +69,7 @@ Untuk test pengiriman email:
 
 ```bash
 php artisan tinker
->>> Mail::raw('Test email from Sistem Cinta', function($m) { $m->to('your-email@example.com')->subject('Test'); });
+>>> Mail::raw('Test email from CINTA', function($m) { $m->to('your-email@example.com')->subject('Test'); });
 ```
 
 ## Troubleshooting

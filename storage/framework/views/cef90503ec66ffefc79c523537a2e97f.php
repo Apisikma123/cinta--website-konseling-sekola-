@@ -1,18 +1,16 @@
-@extends('layouts.auth')
+<?php $__env->startSection('title', 'Login Guru/Admin'); ?>
 
-@section('title', 'Login Guru/Admin')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="mb-4">
-    <a href="{{ url('/') }}" class="inline-flex items-center text-purple-600 hover:text-purple-800 text-sm font-medium">
+    <a href="<?php echo e(url('/')); ?>" class="inline-flex items-center text-purple-600 hover:text-purple-800 text-sm font-medium">
         <i class="fas fa-arrow-left mr-2"></i> Kembali ke Beranda
     </a>
 </div>
 
 
 
-<form method="POST" action="{{ route('login.store') }}" id="loginForm">
-    @csrf
+<form method="POST" action="<?php echo e(route('login.store')); ?>" id="loginForm">
+    <?php echo csrf_field(); ?>
     <div class="space-y-5">
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -20,7 +18,7 @@
             </label>
             <input type="email" name="email" required
                    class="w-full px-4 py-3 rounded-lg border border-purple-200 focus:ring-2 focus:ring-purple-300 focus:border-transparent outline-none transition"
-                   placeholder="guru@sekolah.sch.id" value="{{ old('email') }}">
+                   placeholder="guru@sekolah.sch.id" value="<?php echo e(old('email')); ?>">
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -41,18 +39,37 @@
         </button>
 
         <!-- Loading Modal -->
-        @push('modals')
+        <?php $__env->startPush('modals'); ?>
         <div id="loginLoadingModal" class="hidden fixed inset-0 bg-white z-[999999]" style="display: none;">
             <div class="flex items-center justify-center h-full">
-                <x-loading message="Memverifikasi login..." />
+                <?php if (isset($component)) { $__componentOriginal84bc13f46ede078ae58666238de3da00 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal84bc13f46ede078ae58666238de3da00 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.loading','data' => ['message' => 'Memverifikasi login...']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('loading'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['message' => 'Memverifikasi login...']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal84bc13f46ede078ae58666238de3da00)): ?>
+<?php $attributes = $__attributesOriginal84bc13f46ede078ae58666238de3da00; ?>
+<?php unset($__attributesOriginal84bc13f46ede078ae58666238de3da00); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal84bc13f46ede078ae58666238de3da00)): ?>
+<?php $component = $__componentOriginal84bc13f46ede078ae58666238de3da00; ?>
+<?php unset($__componentOriginal84bc13f46ede078ae58666238de3da00); ?>
+<?php endif; ?>
             </div>
         </div>
-        @endpush
+        <?php $__env->stopPush(); ?>
     </div>
 </form>
 
 <div class="text-center mt-6">
-    <a href="{{ route('register.teacher.form') }}" class="text-purple-600 hover:text-purple-800 text-sm">
+    <a href="<?php echo e(route('register.teacher.form')); ?>" class="text-purple-600 hover:text-purple-800 text-sm">
         <i class="fas fa-user-plus mr-1"></i> Daftar sebagai Guru Baru
     </a>
 </div>
@@ -79,8 +96,8 @@
 
     // Display validation errors with SweetAlert
     document.addEventListener('DOMContentLoaded', function() {
-        @if ($errors->any())
-            const errors = {!! json_encode($errors->all()) !!};
+        <?php if($errors->any()): ?>
+            const errors = <?php echo json_encode($errors->all()); ?>;
             const errorMessage = errors.length > 0 ? errors[0] : 'Terjadi kesalahan saat login';
             
             Swal.fire({
@@ -93,36 +110,37 @@
                 document.getElementById('loginLoadingModal').classList.add('hidden');
                 document.getElementById('login-btn').disabled = false;
             });
-        @endif
+        <?php endif; ?>
 
-        @if (session('success'))
+        <?php if(session('success')): ?>
             Swal.fire({
                 icon: 'success',
                 title: 'Berhasil!',
-                text: '{{ session('success') }}',
+                text: '<?php echo e(session('success')); ?>',
                 confirmButtonColor: '#9333ea'
             });
-        @endif
+        <?php endif; ?>
 
-        @if (session('warning'))
+        <?php if(session('warning')): ?>
             Swal.fire({
                 icon: 'warning',
                 title: 'Peringatan!',
-                text: '{{ session('warning') }}',
+                text: '<?php echo e(session('warning')); ?>',
                 confirmButtonColor: '#9333ea'
             });
-        @endif
+        <?php endif; ?>
 
-        @if (session('info'))
+        <?php if(session('info')): ?>
             Swal.fire({
                 icon: 'info',
                 title: 'Informasi',
-                text: '{{ session('info') }}',
+                text: '<?php echo e(session('info')); ?>',
                 confirmButtonColor: '#9333ea'
             });
-        @endif
+        <?php endif; ?>
     });
 </script>
 
-@endsection
+<?php $__env->stopSection(); ?>
  
+<?php echo $__env->make('layouts.auth', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH D:\ngoding\sistem-cinta\resources\views/auth/login.blade.php ENDPATH**/ ?>

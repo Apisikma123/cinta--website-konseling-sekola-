@@ -32,7 +32,7 @@ class SendOtpEmail implements ShouldQueue
 
     public function handle(): void
     {
-        $subject = 'Kode OTP - Sistem Cinta';
+        $subject = 'Kode OTP - CINTA';
 
         // Try Resend API first
         try {
@@ -47,7 +47,7 @@ class SendOtpEmail implements ShouldQueue
 
         // Fallback to Laravel Mail (SMTP)
         try {
-            $text = "Kode OTP Anda: {$this->code}\n\nKode ini berlaku selama {$this->expiresInMinutes} menit.\nJika Anda tidak meminta kode ini, abaikan email ini.\n\nSistem Cinta";
+            $text = "Kode OTP Anda: {$this->code}\n\nKode ini berlaku selama {$this->expiresInMinutes} menit.\nJika Anda tidak meminta kode ini, abaikan email ini.\n\nCINTA";
 
             Mail::raw($text, function ($message) use ($subject) {
                 $message->to($this->email)->subject($subject);

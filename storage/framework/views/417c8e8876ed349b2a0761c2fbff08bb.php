@@ -1,16 +1,14 @@
-@extends('layouts.auth')
+<?php $__env->startSection('title', 'Daftar Guru Baru'); ?>
 
-@section('title', 'Daftar Guru Baru')
-
-@section('content')
-<form method="POST" action="{{ route('register.teacher') }}" id="registerForm">
-    @csrf
+<?php $__env->startSection('content'); ?>
+<form method="POST" action="<?php echo e(route('register.teacher')); ?>" id="registerForm">
+    <?php echo csrf_field(); ?>
     <div class="space-y-5">
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">
                 <i class="fas fa-user mr-2 text-purple-600"></i>Nama Lengkap
             </label>
-            <input type="text" name="name" required value="{{ old('name') }}"
+            <input type="text" name="name" required value="<?php echo e(old('name')); ?>"
                    class="w-full px-4 py-3 rounded-lg border border-purple-200 focus:ring-2 focus:ring-purple-300 focus:border-transparent outline-none transition"
                    placeholder="Nama Anda">
         </div>
@@ -18,7 +16,7 @@
             <label class="block text-sm font-medium text-gray-700 mb-2">
                 <i class="fas fa-envelope mr-2 text-purple-600"></i>Email
             </label>
-            <input type="email" name="email" required value="{{ old('email') }}"
+            <input type="email" name="email" required value="<?php echo e(old('email')); ?>"
                    class="w-full px-4 py-3 rounded-lg border border-purple-200 focus:ring-2 focus:ring-purple-300 focus:border-transparent outline-none transition"
                    placeholder="guru@sekolah.sch.id">
         </div>
@@ -29,18 +27,18 @@
             <select name="school_id" required
                     class="w-full px-4 py-3 rounded-lg border border-purple-200 focus:ring-2 focus:ring-purple-300 focus:border-transparent outline-none transition">
                 <option value="">Pilih sekolah</option>
-                @foreach($schools as $school)
-                    <option value="{{ $school->id }}" {{ old('school_id') == $school->id ? 'selected' : '' }}>
-                        {{ $school->name }}@if($school->city) - {{ $school->city }}@endif
+                <?php $__currentLoopData = $schools; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $school): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <option value="<?php echo e($school->id); ?>" <?php echo e(old('school_id') == $school->id ? 'selected' : ''); ?>>
+                        <?php echo e($school->name); ?><?php if($school->city): ?> - <?php echo e($school->city); ?><?php endif; ?>
                     </option>
-                @endforeach
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </select>
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">
                 <i class="fab fa-whatsapp mr-2 text-green-600"></i>Nomor WhatsApp
             </label>
-            <input type="text" name="whatsapp" required value="{{ old('whatsapp') }}"
+            <input type="text" name="whatsapp" required value="<?php echo e(old('whatsapp')); ?>"
                    class="w-full px-4 py-3 rounded-lg border border-purple-200 focus:ring-2 focus:ring-purple-300 focus:border-transparent outline-none transition"
                    placeholder="628123456789">
             <p class="text-xs text-gray-500 mt-1">Gunakan format 628xxxx (tanpa spasi).</p>
@@ -85,14 +83,33 @@
         <!-- Loading Modal -->
         <div id="registerLoadingModal" class="hidden fixed inset-0 bg-white z-50" style="display: none;">
             <div class="flex items-center justify-center h-full">
-                <x-loading message="Memproses pendaftaran..." />
+                <?php if (isset($component)) { $__componentOriginal84bc13f46ede078ae58666238de3da00 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal84bc13f46ede078ae58666238de3da00 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.loading','data' => ['message' => 'Memproses pendaftaran...']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('loading'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['message' => 'Memproses pendaftaran...']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal84bc13f46ede078ae58666238de3da00)): ?>
+<?php $attributes = $__attributesOriginal84bc13f46ede078ae58666238de3da00; ?>
+<?php unset($__attributesOriginal84bc13f46ede078ae58666238de3da00); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal84bc13f46ede078ae58666238de3da00)): ?>
+<?php $component = $__componentOriginal84bc13f46ede078ae58666238de3da00; ?>
+<?php unset($__componentOriginal84bc13f46ede078ae58666238de3da00); ?>
+<?php endif; ?>
             </div>
         </div>
     </div>
 </form>
 
 <div class="text-center mt-6">
-    <a href="{{ route('login') }}" class="text-purple-600 hover:text-purple-800 text-sm">
+    <a href="<?php echo e(route('login')); ?>" class="text-purple-600 hover:text-purple-800 text-sm">
         <i class="fas fa-arrow-left mr-1"></i> Sudah punya akun? Login
     </a>
 </div>
@@ -123,8 +140,8 @@
 
     // Display validation errors with SweetAlert
     document.addEventListener('DOMContentLoaded', function() {
-        @if ($errors->any())
-            const errors = {!! json_encode($errors->all()) !!};
+        <?php if($errors->any()): ?>
+            const errors = <?php echo json_encode($errors->all()); ?>;
             const errorMessage = errors.length > 0 ? errors[0] : 'Terjadi kesalahan saat mendaftar';
             
             Swal.fire({
@@ -137,38 +154,39 @@
                 document.getElementById('registerLoadingModal').classList.add('hidden');
                 document.getElementById('register-btn').disabled = false;
             });
-        @endif
+        <?php endif; ?>
 
-        @if (session('success'))
+        <?php if(session('success')): ?>
             Swal.fire({
                 icon: 'success',
                 title: 'Pendaftaran Berhasil!',
-                text: '{{ session('success') }}',
+                text: '<?php echo e(session('success')); ?>',
                 confirmButtonColor: '#9333ea',
                 didClose: () => {
-                    window.location.href = '{{ route('login') }}';
+                    window.location.href = '<?php echo e(route('login')); ?>';
                 }
             });
-        @endif
+        <?php endif; ?>
 
-        @if (session('warning'))
+        <?php if(session('warning')): ?>
             Swal.fire({
                 icon: 'warning',
                 title: 'Peringatan!',
-                text: '{{ session('warning') }}',
+                text: '<?php echo e(session('warning')); ?>',
                 confirmButtonColor: '#9333ea'
             });
-        @endif
+        <?php endif; ?>
 
-        @if (session('info'))
+        <?php if(session('info')): ?>
             Swal.fire({
                 icon: 'info',
                 title: 'Informasi',
-                text: '{{ session('info') }}',
+                text: '<?php echo e(session('info')); ?>',
                 confirmButtonColor: '#9333ea'
             });
-        @endif
+        <?php endif; ?>
     });
 </script>
 
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.auth', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH D:\ngoding\sistem-cinta\resources\views/auth/register-teacher.blade.php ENDPATH**/ ?>

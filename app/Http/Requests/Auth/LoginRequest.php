@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\Auth;
 
-use App\Services\RecaptchaService;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -28,26 +27,9 @@ class LoginRequest extends FormRequest
      */
     public function rules(): array
     {
-        $rules = [
+        return [
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
-        ];
-
-        // Only require recaptcha_token if reCAPTCHA is enabled
-        if (config('recaptcha.enabled', false)) {
-            $rules['recaptcha_token'] = ['required', 'string'];
-        }
-
-        return $rules;
-    }
-
-    /**
-     * Custom error messages
-     */
-    public function messages(): array
-    {
-        return [
-            'recaptcha_token.required' => 'Verifikasi keamanan gagal. Silakan coba lagi.',
         ];
     }
 
@@ -59,20 +41,6 @@ class LoginRequest extends FormRequest
     public function authenticate(): void
     {
         $this->ensureIsNotRateLimited();
-
-        // Verify reCAPTCHA token only if enabled
-        if (config('recaptcha.enabled', false)) {
-            $recaptchaService = new RecaptchaService();
-            if (!$recaptchaService->verify($this->string('recaptcha_token'), 0.5)) {
-                Log::warning('reCAPTCHA verification failed for login attempt', [
-                    'email' => $this->email,
-                    'ip' => $this->ip(),
-                ]);
-                throw ValidationException::withMessages([
-                    'email' => 'Verifikasi keamanan gagal. Silakan coba lagi.',
-                ]);
-            }
-        }
 
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());

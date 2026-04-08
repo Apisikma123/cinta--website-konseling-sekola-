@@ -108,7 +108,7 @@ class MagicLinkService
     {
         $apiKey = config('services.resend.key') ?? env('RESEND_API_KEY');
         $fromAddress = config('services.resend.from_address', env('RESEND_FROM_ADDRESS', 'sistemcinta@telkomcare.my.id'));
-        $fromName = config('services.resend.from_name', env('RESEND_FROM_NAME', 'Sistem BK'));
+        $fromName = config('services.resend.from_name', env('RESEND_FROM_NAME', 'CINTA'));
 
         if (!$apiKey) {
             Log::warning('Resend API key not configured');

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Halaman Tidak Ditemukan</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css']); ?>
+    <link rel="icon" href="<?php echo e(asset('img/icon.png')); ?>" type="image/png">
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+        .float-animation {
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        .pulse-animation {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-purple-50 to-blue-50 min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-2xl w-full">
+        <!-- SVG 404 Illustration -->
+        <div class="text-center mb-8">
+            <svg class="float-animation w-32 h-32 sm:w-48 sm:h-48 mx-auto mb-6" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Background Circle -->
+                <circle cx="150" cy="150" r="140" fill="#F3E8FF" stroke="#DDD6FE" stroke-width="2"/>
+                
+                <!-- 404 Text -->
+                <text x="150" y="140" font-size="80" font-weight="700" text-anchor="middle" fill="url(#gradientText)" font-family="Poppins">
+                    404
+                </text>
+                
+                <!-- Decorative Elements -->
+                <circle cx="80" cy="80" r="8" fill="#A78BFA" opacity="0.6"/>
+                <circle cx="220" cy="100" r="6" fill="#C4B5FD" opacity="0.7"/>
+                <circle cx="240" cy="200" r="7" fill="#A78BFA" opacity="0.5"/>
+                <circle cx="60" cy="220" r="6" fill="#C4B5FD" opacity="0.6"/>
+                
+                <!-- Question Mark Icon -->
+                <g transform="translate(150, 200)">
+                    <circle cx="0" cy="0" r="25" fill="#DBEAFE" stroke="#93C5FD" stroke-width="2"/>
+                    <text x="0" y="10" font-size="35" font-weight="700" text-anchor="middle" fill="#3B82F6" font-family="Poppins">?</text>
+                </g>
+                
+                <!-- Gradient Definition -->
+                <defs>
+                    <linearGradient id="gradientText" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#7C3AED;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#3B82F6;stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+            </svg>
+        </div>
+
+        <!-- Content -->
+        <div class="bg-white rounded-3xl shadow-2xl p-6 sm:p-10 border border-purple-100 text-center">
+            <h1 class="text-3xl sm:text-4xl font-bold text-purple-800 mb-3">
+                Oops! Halaman Tidak Ditemukan
+            </h1>
+            <p class="text-base sm:text-lg text-gray-600 mb-2">
+                Maaf, halaman yang Anda cari tidak ada.
+            </p>
+            <p class="text-sm sm:text-base text-gray-500 mb-8">
+                Halaman mungkin telah dihapus, dipindahkan, atau URL yang Anda masukkan salah.
+            </p>
+
+            <!-- Error Details -->
+            <div class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-4 sm:p-6 mb-8 border border-purple-100">
+                <div class="flex items-center justify-center gap-2 mb-2">
+                    <i class="fas fa-info-circle text-purple-600 text-lg"></i>
+                    <p class="text-sm text-purple-700 font-semibold">Informasi Error</p>
+                </div>
+                <p class="text-xs sm:text-sm text-gray-700">
+                    Error Code: <span class="font-mono font-bold text-purple-600"><?php echo e($exception->getStatusCode()); ?></span> — 
+                    <span class="text-gray-600"><?php echo e($exception->getMessage() ?: 'Not Found'); ?></span>
+                </p>
+            </div>
+
+            <!-- Suggestions -->
+            <div class="mb-8">
+                <p class="text-sm font-semibold text-gray-700 mb-3">Yang bisa Anda lakukan:</p>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <a href="/" class="flex flex-col items-center p-3 rounded-lg bg-purple-50 hover:bg-purple-100 transition border border-purple-200">
+                        <i class="fas fa-home text-purple-600 text-xl mb-2"></i>
+                        <span class="text-xs font-semibold text-gray-700">Kembali ke Beranda</span>
+                    </a>
+                    <a href="/track" class="flex flex-col items-center p-3 rounded-lg bg-blue-50 hover:bg-blue-100 transition border border-blue-200">
+                        <i class="fas fa-search text-blue-600 text-xl mb-2"></i>
+                        <span class="text-xs font-semibold text-gray-700">Lacak Laporan</span>
+                    </a>
+                    <a href="/create" class="flex flex-col items-center p-3 rounded-lg bg-green-50 hover:bg-green-100 transition border border-green-200">
+                        <i class="fas fa-plus text-green-600 text-xl mb-2"></i>
+                        <span class="text-xs font-semibold text-gray-700">Buat Laporan</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                <a href="/" class="flex items-center justify-center bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 active:scale-95 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300">
+                    <i class="fas fa-arrow-left mr-2"></i> <span>Kembali ke Beranda</span>
+                </a>
+                <a href="javascript:history.back()" class="flex items-center justify-center bg-gray-200 hover:bg-gray-300 active:scale-95 text-gray-700 font-semibold py-3 px-6 rounded-lg transition-all duration-300">
+                    <i class="fas fa-undo mr-2"></i> <span>Halaman Sebelumnya</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Footer Message -->
+        <div class="text-center mt-8">
+            <p class="text-xs sm:text-sm text-gray-500">
+                Perlu bantuan? Hubungi kami melalui email atau telepon yang tersedia di halaman contact.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+<?php /**PATH D:\ngoding\sistem-cinta\resources\views/errors/404.blade.php ENDPATH**/ ?>

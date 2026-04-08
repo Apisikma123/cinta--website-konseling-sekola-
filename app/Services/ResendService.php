@@ -15,7 +15,7 @@ class ResendService
     {
         $this->apiKey = config('services.resend.key') ?? env('RESEND_API_KEY');
         $this->fromAddress = config('services.resend.from_address', env('RESEND_FROM_ADDRESS', env('MAIL_FROM_ADDRESS', 'sistemcinta@telkomcare.my.id')));
-        $this->fromName = config('services.resend.from_name', env('RESEND_FROM_NAME', env('MAIL_FROM_NAME', 'Sistem Cinta')));
+        $this->fromName = config('services.resend.from_name', env('RESEND_FROM_NAME', env('MAIL_FROM_NAME', 'CINTA')));
     }
 
     /**
@@ -153,7 +153,7 @@ class ResendService
      */
     public function sendReportNotification(string $to, string $teacherName, string $reportTitle, string $action = 'created'): bool
     {
-        $subject = 'Laporan ' . ($action === 'created' ? 'Baru' : 'Diperbarui') . ' - Sistem Cinta';
+        $subject = 'Laporan ' . ($action === 'created' ? 'Baru' : 'Diperbarui') . ' - CINTA';
         $html = $this->getReportNotificationTemplate($teacherName, $reportTitle, $action);
 
         return $this->send($to, $subject, $html);
@@ -197,8 +197,8 @@ class ResendService
         </div>
         <p>Jika Anda tidak meminta kode ini, silakan abaikan email ini.</p>
         <div class="footer">
-            <p>Email ini dikirim oleh Sistem Cinta</p>
-            <p>© 2024 Sistem Cinta. All rights reserved.</p>
+            <p>Email ini dikirim oleh CINTA</p>
+            <p>© 2024 CINTA. All rights reserved.</p>
         </div>
     </div>
 </body>
@@ -258,8 +258,8 @@ HTML;
         </div>
         <p>Silakan login ke sistem untuk melihat detail laporan.</p>
         <div class="footer">
-            <p>Email ini dikirim oleh Sistem Cinta</p>
-            <p>© 2024 Sistem Cinta. All rights reserved.</p>
+            <p>Email ini dikirim oleh CINTA</p>
+            <p>© 2024 CINTA. All rights reserved.</p>
         </div>
     </div>
 </body>
