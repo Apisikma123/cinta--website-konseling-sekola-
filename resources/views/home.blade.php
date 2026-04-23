@@ -4,7 +4,7 @@
 <style>
     /* ===== ROOT & TYPOGRAPHY ===== */
     html { 
-        font-size: clamp(13px, 1.6vw, 18px); 
+        font-size: clamp(15px, 2vw, 20px); 
         scroll-behavior: smooth;
     }
 
@@ -815,8 +815,7 @@
                 @php
                     $jenisIcons = [
                         'akademik' => 'fas fa-book-open',
-                        'bullying' => 'fas fa-shield-halved',
-                        'perundungan' => 'fas fa-hand-fist',
+                        'perundungan(bullying)' => 'fas fa-hand-fist',
                         'kedisiplinan' => 'fas fa-user-check',
                         'keluarga' => 'fas fa-house',
                         'pertemanan' => 'fas fa-user-friends',
@@ -829,7 +828,7 @@
                     <div class="flex items-center justify-between mb-3">
                         <div class="flex items-center gap-3 flex-1">
                             <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600 flex-shrink-0">
-                                <i class="{{ $jenisIcons[$item['jenis']] ?? 'fas fa-circle' }}"></i>
+                                <i class="{{ $jenisIcons[strtolower($item['jenis'])] ?? 'fas fa-circle' }}"></i>
                             </div>
                             <span class="font-semibold text-gray-900 text-sm sm:text-base">{{ ucfirst($item['jenis']) }}</span>
                         </div>

@@ -109,7 +109,7 @@
         <!-- Footer Message -->
         <div class="text-center mt-8">
             <p class="text-xs sm:text-sm text-gray-500 mb-2">
-                Follow kami di media sosial untuk update terbaru tentang status layanan.
+                Follow kami di media sosial untuk update terbaru, atau hubungi <a href="mailto:cintakonseling@cinta-inovasi.my.id" class="underline hover:text-gray-700">cintakonseling@cinta-inovasi.my.id</a>
             </p>
             <div class="flex justify-center gap-3">
                 <a href="#" class="text-gray-400 hover:text-slate-600 transition">

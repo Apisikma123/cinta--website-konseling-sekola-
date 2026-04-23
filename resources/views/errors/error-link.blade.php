@@ -77,7 +77,7 @@
                         <span class="bg-orange-200 text-orange-700 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shrink-0">3</span>
                         <div class="leading-relaxed">
                             <span class="font-semibold block text-orange-900 mb-1">Hubungi Tim BK</span>
-                            Jika situs terus mengalami eror sistem (<a href="mailto:support@sistemcinta.id" class="underline text-orange-700">support@sistemcinta.id</a>), Anda dapat mencatat laporan manual kepada guru.
+                            Jika situs terus mengalami eror sistem (<a href="mailto:cintakonseling@cinta-inovasi.my.id" class="underline text-orange-700">cintakonseling@cinta-inovasi.my.id</a>), Anda dapat mencatat laporan manual kepada guru.
                         </div>
                     </li>
                 </ul>

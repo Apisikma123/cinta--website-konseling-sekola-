@@ -120,7 +120,7 @@
         <!-- Footer Message -->
         <div class="text-center mt-8">
             <p class="text-xs sm:text-sm text-gray-500">
-                Perlu bantuan? Hubungi kami melalui email atau telepon yang tersedia di halaman contact.
+                Perlu bantuan? Hubungi kami di <a href="mailto:cintakonseling@cinta-inovasi.my.id" class="underline hover:text-gray-700">cintakonseling@cinta-inovasi.my.id</a>
             </p>
         </div>
     </div>

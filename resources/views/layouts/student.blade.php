@@ -140,11 +140,11 @@
                 <!-- Logo & Brand -->
                 <div class="flex items-center gap-2 md:gap-3">
                     <img src="{{ asset('img/icon.png') }}" alt="Logo CINTA" class="w-9 h-9 md:w-11 md:h-11 object-contain">
-                    <div class="flex flex-col -space-y-1">
-                        <span class="text-base md:text-xl font-bold text-gray-900 leading-tight">
+                    <div class="flex flex-col">
+                        <span class="text-lg md:text-2xl font-bold text-gray-900 leading-none mb-0.5">
                             CINTA
                         </span>
-                        <span class="text-[10px] md:text-xs text-gray-500 font-medium hidden sm:block">Curahan Inovatif Anak Tanpa Batas</span>
+                        <span class="text-[10px] min-[375px]:text-[11px] sm:text-xs md:text-sm text-gray-500 font-medium leading-tight max-w-[160px] min-[400px]:max-w-none">Curahan Inovatif Anak Tanpa Batas</span>
                     </div>
                 </div>
 
@@ -208,6 +208,13 @@
     <main>
         @yield('content')
     </main>
+
+    <!-- Footer -->
+    <footer class="text-center text-xs text-gray-400 py-6 border-t border-gray-100 mt-8">
+        © {{ date('Y') }} Sistem CINTA • Privasi Terjamin
+        <br>
+        <a href="mailto:cintakonseling@cinta-inovasi.my.id" class="hover:text-purple-600 transition">cintakonseling@cinta-inovasi.my.id</a>
+    </footer>
 
     <!-- Toasts / Notifications -->
     @includeIf('components.toast')

@@ -1,4 +1,6 @@
 @extends('layouts.auth')
+@section('title', 'Buat Laporan BK - CINTA')
+@section('page_heading', 'Formulir Pengaduan BK')
 
 @section('content')
 <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -41,7 +43,7 @@
     <div class="bg-white rounded-xl shadow-sm p-6 sm:p-8 border border-purple-100">
 
         <!-- Form -->
-        <form id="reportForm">
+        <form id="reportForm" data-no-loading>
             @csrf
             <div class="space-y-5">
             <div>
@@ -98,30 +100,29 @@
                     @php
                         $jenisOptions = [
                             ['value' => 'akademik', 'label' => 'Akademik', 'icon' => 'fas fa-book-open', 'desc' => 'Tugas, nilai, fokus belajar.'],
-                            ['value' => 'bullying', 'label' => 'Bullying', 'icon' => 'fas fa-shield-halved', 'desc' => 'Perlakuan kasar atau menghina.'],
-                            ['value' => 'perundungan', 'label' => 'Perundungan', 'icon' => 'fas fa-hand-fist', 'desc' => 'Kekerasan fisik/mental.'],
+                            ['value' => 'perundungan(bullying)', 'label' => 'Perundungan(bullying)', 'icon' => 'fas fa-hand-fist', 'desc' => 'Kekerasan fisik/mental.'],
                             ['value' => 'kedisiplinan', 'label' => 'Kedisiplinan', 'icon' => 'fas fa-user-check', 'desc' => 'Terlambat, aturan sekolah.'],
-                            ['value' => 'keluarga', 'label' => 'Masalah Keluarga', 'icon' => 'fas fa-house', 'desc' => 'Kondisi di rumah atau keluarga.'],
+                            ['value' => 'keluarga', 'label' => 'Keluarga', 'icon' => 'fas fa-house', 'desc' => 'Kondisi di rumah.'],
                             ['value' => 'pertemanan', 'label' => 'Pertemanan', 'icon' => 'fas fa-user-friends', 'desc' => 'Konflik dengan teman.'],
-                            ['value' => 'kesehatan', 'label' => 'Kesehatan Mental', 'icon' => 'fas fa-heart-pulse', 'desc' => 'Stres, cemas, tekanan batin.'],
+                            ['value' => 'kesehatan', 'label' => 'Kesehatan Mental', 'icon' => 'fas fa-heart-pulse', 'desc' => 'Stres, cemas, tekanan.'],
                             ['value' => 'lainnya', 'label' => 'Lainnya', 'icon' => 'fas fa-ellipsis', 'desc' => 'Masalah lainnya.'],
                         ];
                     @endphp
 
                     @foreach($jenisOptions as $option)
-                        <label class="jenis-card group border border-purple-100 rounded-xl p-4 cursor-pointer bg-white hover:border-purple-300 hover:shadow-sm transition relative">
+                        <label class="jenis-card group border border-purple-100 rounded-xl p-4 cursor-pointer bg-white hover:border-purple-300 hover:shadow-sm transition relative overflow-hidden">
                             <input type="checkbox" name="jenis_laporan" value="{{ $option['value'] }}" class="jenis-input hidden"
                                    {{ old('jenis_laporan') === $option['value'] ? 'checked' : '' }}>
                             <span class="absolute top-3 right-3 w-6 h-6 rounded-full bg-purple-600 text-white text-xs flex items-center justify-center opacity-0 transition jenis-check">
                                 <i class="fas fa-check"></i>
                             </span>
-                            <div class="flex items-start gap-3">
-                                <div class="w-10 h-10 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center text-lg group-hover:bg-purple-200">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center text-lg group-hover:bg-purple-200 flex-shrink-0">
                                     <i class="{{ $option['icon'] }}"></i>
                                 </div>
-                                <div>
-                                    <p class="font-semibold text-gray-900">{{ $option['label'] }}</p>
-                                    <p class="text-xs text-gray-500 mt-1">{{ $option['desc'] }}</p>
+                                <div class="min-w-0">
+                                    <p class="font-semibold text-gray-900 text-sm">{{ $option['label'] }}</p>
+                                    <p class="text-xs text-gray-500 mt-0.5">{{ $option['desc'] }}</p>
                                 </div>
                             </div>
                         </label>
@@ -168,9 +169,9 @@
             <div class="grid grid-cols-1 gap-4 pt-2 border-t border-purple-100">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-envelope mr-2 text-purple-600"></i>Email (opsional)
+                        <i class="fas fa-envelope mr-2 text-purple-600"></i>Email *
                     </label>
-                    <input type="email" name="email_murid"
+                    <input type="email" name="email_murid" required
                            class="w-full px-4 py-3 rounded-lg border border-purple-200 focus:ring-2 focus:ring-purple-300 focus:border-transparent outline-none transition"
                            placeholder="untuk notifikasi update">
                 </div>
@@ -191,52 +192,96 @@
             </button>
         </div>
     </form>
-    
-    <!-- Loading Modal untuk form submission -->
-    <div id="loadingModal" class="hidden fixed inset-0 bg-white z-50" style="display: none;">
-        <div class="flex items-center justify-center h-full">
-            <x-loading message="Memproses laporan Anda..." />
-        </div>
-    </div>
     </div>
 </div>
 
-<!-- MODAL POPUP -->
-<div id="codeModal" class="hidden fixed inset-0 bg-white z-50" style="display: none;">
-    <div class="flex items-center justify-center h-full">
-        <div class="bg-white rounded-2xl p-6 w-11/12 max-w-md mx-4 animate-fade-in">
-            <div class="text-center">
+@push('modals')
+
+<!-- MODAL POPUP: Laporan tanpa email -->
+<div id="codeModal" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-black/60 backdrop-blur-lg p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl animate-fade-in relative mx-auto my-auto">
+        <div class="text-center">
             <div class="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i class="fas fa-check text-green-600 text-xl"></i>
             </div>
             <h2 class="text-xl font-bold text-purple-800 mb-2">Laporan Terkirim!</h2>
             <p class="text-purple-600 text-sm mb-4">Simpan kode ini untuk melacak laporan Anda</p>
-            
-            <div class="bg-purple-50 rounded-lg p-4 mb-4">
-                <div class="font-mono text-lg font-bold text-purple-700" id="modalCode">XXXXXX</div>
-            </div>
-            
-            <div class="space-y-3">
-                <x-button type="button" variant="outline" class="w-full justify-center" onclick="copyCode()">
-                    <i class="fas fa-copy mr-2"></i> Salin Kode
-                </x-button>
 
-                <x-button type="button" variant="primary" class="w-full justify-center" onclick="goHome()">
-                    <i class="fas fa-home mr-2"></i> Kembali ke Beranda
-                </x-button>
+            <div class="bg-purple-50 rounded-lg p-4 mb-6">
+                <div class="font-mono text-2xl font-bold text-purple-700 tracking-widest" id="modalCode">XXXXXX</div>
+            </div>
+
+            <div class="space-y-3">
+                <button type="button" onclick="copyCode()"
+                    class="w-full border-2 border-purple-300 text-purple-700 font-semibold py-3 rounded-xl hover:bg-purple-50 transition flex items-center justify-center gap-2">
+                    <i class="fas fa-copy"></i> Salin Kode
+                </button>
+                <button type="button" onclick="goHome()"
+                    class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 rounded-xl transition flex items-center justify-center gap-2">
+                    <i class="fas fa-home"></i> Kembali ke Beranda
+                </button>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Email Sent Modal -->
+<div id="emailSentModal" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-black/60 backdrop-blur-lg p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl p-8 w-full max-w-lg shadow-2xl animate-fade-in relative mx-auto my-auto">
+        <div class="text-center">
+            <!-- Animated envelope icon -->
+            <div class="w-20 h-20 bg-gradient-to-br from-purple-100 to-purple-200 rounded-full flex items-center justify-center mx-auto mb-5 shadow-inner">
+                <i class="fas fa-envelope-open-text text-purple-600 text-3xl"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-purple-800 mb-2">Cek Email Kamu! 📬</h2>
+            <p class="text-gray-500 text-sm leading-relaxed mb-5">
+                Laporan berhasil dikirim! Kami sudah mengirimkan tautan magic link ke email kamu.
+                Klik tautan tersebut untuk melihat kode unik laporan.
+            </p>
+
+            <!-- Email hint box -->
+            <div class="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-5 flex items-center gap-3">
+                <div class="w-9 h-9 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-envelope text-purple-500"></i>
+                </div>
+                <div class="text-left">
+                    <p class="text-xs text-gray-400 mb-0.5">Dikirim ke</p>
+                    <p class="text-purple-700 font-semibold text-sm" id="sentEmailHint">email kamu</p>
+                </div>
+            </div>
+
+            <!-- Info note -->
+            <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-5 flex items-start gap-2 text-left">
+                <i class="fas fa-triangle-exclamation text-amber-500 mt-0.5 text-sm"></i>
+                <p class="text-xs text-amber-700">Jika tidak ada di kotak masuk, cek folder <strong>spam/sampah</strong>. Tautan berlaku selama <strong>24 jam</strong>.</p>
+            </div>
+
+            <!-- Resend button with countdown -->
+            <button id="resendBtn"
+                    disabled
+                    class="w-full bg-purple-600 hover:bg-purple-700 active:scale-95 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-all duration-200 mb-3 flex items-center justify-center gap-2">
+                <i class="fas fa-paper-plane"></i>
+                <span id="resendBtnText">Kirim Ulang (2:00)</span>
+            </button>
+
+            <button onclick="window.location.href='/'"
+                    class="w-full border-2 border-purple-200 text-purple-700 font-semibold py-3 rounded-xl hover:bg-purple-50 transition flex items-center justify-center gap-2">
+                <i class="fas fa-home"></i> Kembali ke Beranda
+            </button>
+        </div>
+    </div>
+</div>
+@endpush
+
 <style>
 @keyframes fadeIn {
-    from { opacity: 0; transform: scale(0.9); }
-    to { opacity: 1; transform: scale(1); }
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
 }
 .animate-fade-in {
-    animation: fadeIn 0.3s ease-out;
+    animation: fadeIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+
 </style>
 
 <script>
@@ -259,10 +304,9 @@ document.getElementById('reportForm').addEventListener('submit', async function(
     const formData = new FormData(this);
     const submitBtn = document.getElementById('submitBtn');
     const submitText = document.getElementById('submitText');
-    const loadingModal = document.getElementById('loadingModal');
     
     // Show loading
-    loadingModal.classList.remove('hidden');
+    if (window.PageLoading) window.PageLoading.show('Mengirim laporan Anda...', true);
     submitBtn.disabled = true;
     submitText.textContent = 'Memproses...';
     
@@ -280,7 +324,7 @@ document.getElementById('reportForm').addEventListener('submit', async function(
 
         // Handle 429 - Too Many Requests
         if (response.status === 429) {
-            loadingModal.classList.add('hidden');
+            if (window.PageLoading) window.PageLoading.hide();
             submitBtn.disabled = true;
             submitText.textContent = 'Tunggu 1 menit...';
             
@@ -340,20 +384,23 @@ document.getElementById('reportForm').addEventListener('submit', async function(
                     confirmButtonColor: '#9333ea'
                 });
             }
+            if (window.PageLoading) window.PageLoading.hide();
             return;
         }
 
         if (result.tracking_code) {
-            // Tampilkan modal
-            document.getElementById('modalCode').innerText = result.tracking_code;
-            document.getElementById('codeModal').classList.remove('hidden');
-            
-            Swal.fire({
-                icon: 'success',
-                title: 'Laporan Terkirim!',
-                text: 'Kode tracking telah dikirim ke email Anda.',
-                confirmButtonColor: '#9333ea'
-            });
+            if (result.email_sent) {
+                // Email was provided: show professional "check email" overlay
+                _currentTrackingCode = result.tracking_code;
+                document.getElementById('sentEmailHint').textContent = result.email || 'email kamu';
+                openModal(document.getElementById('emailSentModal'));
+                // Start 2-min frontend countdown
+                _startResendCooldown(120);
+            } else {
+                // No email: show tracking code modal directly
+                document.getElementById('modalCode').innerText = result.tracking_code;
+                openModal(document.getElementById('codeModal'));
+            }
         } else {
             Swal.fire({
                 icon: 'warning',
@@ -387,7 +434,8 @@ document.getElementById('reportForm').addEventListener('submit', async function(
         }, 1000);
     } finally {
         // Hide loading
-        loadingModal.classList.add('hidden');
+        if (window.PageLoading) window.PageLoading.hide();
+        submitBtn.disabled = false;
     }
 });
 
@@ -412,9 +460,108 @@ function copyCode() {
     });
 }
 
+// Buka modal & kunci scroll background
+function openModal(el) {
+    el.classList.remove('hidden');
+    el.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
+    // Scroll modal ke atas supaya isi kelihatan dari awal
+    el.scrollTop = 0;
+}
+
+// Tutup modal & unlock scroll
+function closeModal(el) {
+    el.classList.add('hidden');
+    el.classList.remove('flex');
+    document.body.style.overflow = '';
+    document.body.style.touchAction = '';
+}
+
 function goHome() {
+    document.body.style.overflow = '';
+    document.body.style.touchAction = '';
     window.location.href = '/';
 }
+
+// ===================== RESEND MAGIC LINK (Fitur Baru 1) =====================
+let _currentTrackingCode = null;
+let _resendInterval      = null;
+
+function _startResendCooldown(seconds) {
+    const btn = document.getElementById('resendBtn');
+    btn.disabled = true;
+    let remaining = seconds;
+    _updateResendLabel(remaining);
+
+    if (_resendInterval) clearInterval(_resendInterval);
+    _resendInterval = setInterval(() => {
+        remaining--;
+        _updateResendLabel(remaining);
+        if (remaining <= 0) {
+            clearInterval(_resendInterval);
+            btn.disabled = false;
+            document.getElementById('resendBtnText').textContent = 'Kirim Ulang';
+        }
+    }, 1000);
+}
+
+function _updateResendLabel(seconds) {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    document.getElementById('resendBtnText').textContent =
+        `Kirim Ulang (${m}:${String(s).padStart(2, '0')})`;
+}
+
+document.getElementById('resendBtn').addEventListener('click', async function () {
+    if (!_currentTrackingCode) return;
+    this.disabled = true;
+    document.getElementById('resendBtnText').textContent = 'Mengirim...';
+
+    try {
+        const res = await fetch(`/report/${_currentTrackingCode}/resend`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept'      : 'application/json',
+                'Content-Type': 'application/json',
+            },
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            Swal.fire({
+                icon            : 'success',
+                title           : 'Email Terkirim!',
+                text            : data.message,
+                confirmButtonColor: '#9333ea',
+                timer           : 4000,
+                timerProgressBar: true,
+            });
+            _startResendCooldown(data.retry_after ?? 120);
+        } else if (res.status === 429) {
+            Swal.fire({
+                icon   : 'warning',
+                title  : 'Mohon Tunggu!',
+                text   : data.error || 'Mohon tunggu sebelum mengirim ulang kode.',
+                confirmButtonColor: '#9333ea',
+            });
+            _startResendCooldown(data.retry_after ?? 120);
+        } else {
+            document.getElementById('resendBtnText').textContent = 'Kirim Ulang';
+            this.disabled = false;
+            Swal.fire({
+                icon : 'error',
+                title: 'Gagal!',
+                text : data.error || 'Gagal mengirim ulang. Coba lagi.',
+                confirmButtonColor: '#9333ea',
+            });
+        }
+    } catch (err) {
+        document.getElementById('resendBtnText').textContent = 'Kirim Ulang';
+        this.disabled = false;
+    }
+});
 
 </script>
 

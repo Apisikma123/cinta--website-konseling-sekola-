@@ -31,6 +31,8 @@
 
     <footer class="text-center text-xs text-slate-400 py-6 font-medium italic">
         © {{ date('Y') }} Sistem Laporan BK • Jalur Komunikasi Aman
+        <br>
+        <a href="mailto:cintakonseling@cinta-inovasi.my.id" class="hover:text-slate-600 transition not-italic">cintakonseling@cinta-inovasi.my.id</a>
     </footer>
 
     @includeIf('components.toast')

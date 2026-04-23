@@ -210,14 +210,26 @@
     var msgEl   = document.getElementById('global-loading-msg');
     if (!overlay) return;
 
+    var _timer = null;          // delay timer
+    var DELAY  = 300;           // ms — grace period before showing overlay
+
     /* ── Public API ── */
     window.PageLoading = {
-        show: function (msg) {
-            if (msgEl) msgEl.textContent = msg || '';
-            overlay.classList.add('gl-visible');
-            document.body.style.overflow = 'hidden';
+        /**
+         * Schedule the overlay to appear after DELAY ms.
+         * If hide() is called before the delay fires, the overlay never shows.
+         * Pass instant=true to skip the delay (e.g. form submit).
+         */
+        show: function (msg, instant) {
+            clearTimeout(_timer);
+            if (instant) {
+                _doShow(msg);
+            } else {
+                _timer = setTimeout(function () { _doShow(msg); }, DELAY);
+            }
         },
         hide: function () {
+            clearTimeout(_timer);
             overlay.classList.remove('gl-visible');
             document.body.style.overflow = '';
             // Re-enable any disabled submit buttons
@@ -228,18 +240,24 @@
         }
     };
 
+    function _doShow(msg) {
+        if (msgEl) msgEl.textContent = msg || '';
+        overlay.classList.add('gl-visible');
+        document.body.style.overflow = 'hidden';
+    }
+
     /* ── 1. Hide as soon as page is ready (catches back-forward cache) ── */
     window.addEventListener('pageshow', function (e) {
         // pageshow fires after bfcache restore too — always hide
         PageLoading.hide();
     });
 
-    /* ── 2. Show on unload (real navigation away) ── */
+    /* ── 2. Show on unload (real navigation away) — uses delay ── */
     window.addEventListener('beforeunload', function () {
         PageLoading.show();
     });
 
-    /* ── 3. Form submit ── */
+    /* ── 3. Form submit — instant (prevent double-post) ── */
     document.addEventListener('submit', function (e) {
         var form = e.target;
         if (!form || form.tagName !== 'FORM') return;
@@ -254,10 +272,10 @@
             btn.disabled = true;
         });
 
-        PageLoading.show();
+        PageLoading.show(null, true);
     });
 
-    /* ── 4. Internal link clicks ── */
+    /* ── 4. Internal link clicks — uses delay ── */
     document.addEventListener('click', function (e) {
         var link = e.target.closest('a[href]');
         if (!link) return;
@@ -275,7 +293,7 @@
             if (url.origin !== window.location.origin) return;
         } catch (_) { return; }
 
-        // Only show for GET-like navigations (links don't submit forms)
+        // Show with delay — fast navigations won't flash the overlay
         PageLoading.show();
     });
 

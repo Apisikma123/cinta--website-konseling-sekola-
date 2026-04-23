@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $title ?? 'Cinta Login/Register' }}</title>
+    <title>@yield('title', $title ?? 'Sistem CINTA')</title>
     
     <!-- Font Poppins -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -90,7 +90,7 @@
     <div class="w-full max-w-6xl mx-auto">
         <div class="text-center mb-6 sm:mb-8 fade-in">
             <img src="{{ asset('img/icon.png') }}" alt="Logo" class="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4">
-            <h1 class="text-xl sm:text-2xl font-bold text-purple-800">{{ $title ?? 'Cinta Login/Register' }}</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-purple-800">@yield('page_heading', $title ?? 'Sistem CINTA')</h1>
         </div>
         
         <main class="bg-white rounded-2xl shadow-lg p-6 sm:p-8 border border-purple-100 fade-in">
@@ -98,7 +98,9 @@
         </main>
         
         <footer class="text-center mt-4 sm:mt-6 text-xs text-purple-600">
-            © {{ date('Y') }} Cinta Login/Register
+            © {{ date('Y') }} Sistem CINTA
+            <br>
+            <a href="mailto:cintakonseling@cinta-inovasi.my.id" class="hover:text-purple-800 transition">cintakonseling@cinta-inovasi.my.id</a>
         </footer>
     </div>
 
@@ -141,5 +143,10 @@
             }
         }
     </style>
+    <!-- Global Loading -->
+    @includeIf('components.loading')
+
+    <!-- Modals (Outside of any transformed/animated container to preserve 'fixed' viewport positioning) -->
+    @stack('modals')
 </body>
 </html>

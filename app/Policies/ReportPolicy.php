@@ -27,10 +27,15 @@ class ReportPolicy
             return false;
         }
 
-        if (! empty($user->school)) {
-            return $report->nama_sekolah === $user->school;
+        if (! empty($user->school) && $report->nama_sekolah !== $user->school) {
+            return false;
         }
 
-        return false;
+        // laporan harus sudah diklaim oleh guru ini dulu
+        if (! $report->claimed_by || $report->claimed_by !== $user->id) {
+            return false;
+        }
+
+        return true;
     }
 }

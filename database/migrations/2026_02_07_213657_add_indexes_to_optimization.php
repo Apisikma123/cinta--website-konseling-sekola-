@@ -11,19 +11,20 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('reports', function (Blueprint $table) {
-            $table->index('tracking_code');
-            $table->index('status');
-            $table->index('nama_sekolah');
-            $table->index('guru_id');
-        });
+        try {
+            Schema::table('reports', function (Blueprint $table) {
+                // Tambahkan index satu per satu untuk menghindari crash total kalau satu gagal
+            });
+            Schema::getConnection()->statement('CREATE INDEX reports_tracking_code_index ON reports (tracking_code)');
+        } catch (\Exception $e) {}
+        try { Schema::getConnection()->statement('CREATE INDEX reports_status_index ON reports (status)'); } catch (\Exception $e) {}
+        try { Schema::getConnection()->statement('CREATE INDEX reports_nama_sekolah_index ON reports (nama_sekolah)'); } catch (\Exception $e) {}
+        try { Schema::getConnection()->statement('CREATE INDEX reports_guru_id_index ON reports (guru_id)'); } catch (\Exception $e) {}
 
-        Schema::table('users', function (Blueprint $table) {
-            $table->index('role');
-            $table->index('is_approved');
-            $table->index('is_active');
-            $table->index('email');
-        });
+        try { Schema::getConnection()->statement('CREATE INDEX users_role_index ON users (role)'); } catch (\Exception $e) {}
+        try { Schema::getConnection()->statement('CREATE INDEX users_is_approved_index ON users (is_approved)'); } catch (\Exception $e) {}
+        try { Schema::getConnection()->statement('CREATE INDEX users_is_active_index ON users (is_active)'); } catch (\Exception $e) {}
+        try { Schema::getConnection()->statement('CREATE INDEX users_email_index ON users (email)'); } catch (\Exception $e) {}
     }
 
     /**

@@ -12,14 +12,25 @@ class Chat extends Model
     protected $fillable = [
         'report_code',
         'report_id',
-        'sender_type', // 'student' | 'teacher'
-        'sender_id',   // nullable user id for teachers, null for students
+        'sender_type',       // 'student' | 'teacher'
+        'sender_id',         // nullable user id for teachers, null for students
         'message',
         'is_read',
+        'edited_at',
+        'original_message',
+        'deleted_for_everyone',
+        'deleted_at',
+        'message_encrypted',
+        'message_iv',
+        'is_encrypted',
     ];
 
     protected $casts = [
-        'is_read' => 'boolean',
+        'is_read'             => 'boolean',
+        'deleted_for_everyone'=> 'boolean',
+        'is_encrypted'        => 'boolean',
+        'edited_at'           => 'datetime',
+        'deleted_at'          => 'datetime',
     ];
 
     // RELATIONS

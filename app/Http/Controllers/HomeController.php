@@ -31,9 +31,12 @@ class HomeController extends Controller
             ->latest()
             ->get();
 
-        // Group by school name
+        // Group by school name + city
         $testimonials = $allTestimonials->groupBy(function ($t) {
-            return $t->report?->school?->name ?? $t->report?->nama_sekolah ?? 'Sekolah Lainnya';
+            $school = $t->report?->school;
+            $name = $school?->name ?? $t->report?->nama_sekolah ?? 'Sekolah Lainnya';
+            $city = $school?->city ?? null;
+            return $city ? "{$name} - {$city}" : $name;
         })->map(function ($group) {
             return $group->take(3); // Max 3 per school on homepage
         });
@@ -52,10 +55,17 @@ class HomeController extends Controller
         $counselors = User::where('role', 'teacher')->where('is_active', 1)->get();
         
         // Teachers grouped by school for counselor section
+        // Look up city from schools table for each teacher's school name
+        $schoolCities = School::pluck('city', 'name'); // ['SMP Negeri 1' => 'Jakarta', ...]
+        
         $teachers = User::where('role', 'teacher')
             ->where('is_active', 1)
             ->get()
-            ->groupBy('school');
+            ->groupBy(function ($teacher) use ($schoolCities) {
+                $schoolName = $teacher->school ?? 'Sekolah Lainnya';
+                $city = $schoolCities[$schoolName] ?? null;
+                return $city ? "{$schoolName} - {$city}" : $schoolName;
+            });
 
         return view('home', compact('stats', 'testimonials', 'jenisBreakdown', 'counselors', 'teachers'));
     }

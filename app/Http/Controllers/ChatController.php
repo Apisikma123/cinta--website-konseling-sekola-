@@ -42,7 +42,7 @@ class ChatController extends Controller
     {
         $report = Report::where('tracking_code', $trackingCode)->firstOrFail();
 
-        /** @var \App\Models\User|null $user */
+        /** @var User|null $user */
         $user = auth()->user();
         if ($user && $user->isTeacher()) {
             if ($report->claimed_by && $report->claimed_by !== $user->id) {
@@ -139,6 +139,46 @@ class ChatController extends Controller
         return response()->json($chatData);
     }
 
+    /**
+     * Returns messages that were edited OR deleted recently.
+     * Uses a server-side fixed-lookback window to avoid JS↔PHP timestamp sync issues.
+     * Accepts optional ?secs=N to control lookback (default 12s, max 60s).
+     */
+    public function messageUpdates($trackingCode)
+    {
+        $report = $this->findReport($trackingCode);
+
+        // Fixed lookback window — slightly longer than the poll interval (2s active, 6s idle)
+        // so we never miss a change regardless of client clock drift or timezone.
+        $secs    = max(3, min(60, (int) request('secs', 12)));
+        $sinceAt = now()->subSeconds($secs);
+
+        // Fetch messages changed (edited OR deleted) within the lookback window
+        $chats = Chat::select(['id','sender_type','sender_id','message','is_read','created_at','edited_at','deleted_for_everyone','updated_at'])
+                     ->where('report_id', $report->id)
+                     ->where(function ($q) use ($sinceAt) {
+                         // Edited recently
+                         $q->where('edited_at', '>', $sinceAt)
+                           // OR deleted recently (updated_at advances on ->update())
+                           ->orWhere(function ($q2) use ($sinceAt) {
+                               $q2->where('deleted_for_everyone', true)
+                                  ->where('updated_at', '>', $sinceAt);
+                           });
+                     })
+                     ->limit(50)
+                     ->get();
+
+        $result = $chats->map(fn (Chat $chat) => [
+            'id'         => $chat->id,
+            'message'    => $chat->deleted_for_everyone ? null : $chat->message,
+            'is_deleted' => (bool) $chat->deleted_for_everyone,
+            'is_edited'  => ! is_null($chat->edited_at),
+            'edited_at'  => $chat->edited_at ? \Carbon\Carbon::parse($chat->edited_at)->toIso8601String() : null,
+        ]);
+
+        return response()->json($result);
+    }
+
     public function store(Request $request, $trackingCode)
     {
         $report = $this->findReport($trackingCode);
@@ -152,20 +192,22 @@ class ChatController extends Controller
             $senderId   = null;
             $teacherId  = $report->claimed_by ?? $report->guru_id;
             if ($teacherId) {
-                $last = Cache::get('presence_teacher_' . $teacherId);
+                // Only check chat-page-specific presence (not general presence)
+                $last = Cache::get('presence_inchat_teacher_' . $teacherId);
                 if ($last && (time() - $last) < 45) {
                     $isRecipientOnline = true;
                 }
             }
         } else {
-            /** @var \App\Models\User|null $user */
+            /** @var User|null $user */
             $user = auth()->user();
             if ($user && $user->isTeacher()) {
-                \App\Models\User::where('id', $user->id)->update(['last_activity' => now()]);
+                User::where('id', $user->id)->update(['last_activity' => now()]);
                 $senderType = 'teacher';
                 $senderId   = $user->id;
                 
-                $last = Cache::get('presence_student_' . $report->id);
+                // Only check chat-page-specific presence (not general presence)
+                $last = Cache::get('presence_inchat_student_' . $report->id);
                 if ($last && (time() - $last) < 45) {
                     $isRecipientOnline = true;
                 }
@@ -238,13 +280,16 @@ class ChatController extends Controller
         $isStudent = $request->boolean('is_student');
 
         // ── Track presence via cache only (NO DB write) ──
+        // Set BOTH general presence AND chat-specific presence
         if ($isStudent) {
             Cache::put('presence_student_' . $report->id, time(), 60);
+            Cache::put('presence_inchat_student_' . $report->id, time(), 60);
         } else {
-            /** @var \App\Models\User|null $user */
+            /** @var User|null $user */
             $user = auth()->user();
             if ($user && $user->isTeacher()) {
                 Cache::put('presence_teacher_' . $user->id, time(), 60);
+                Cache::put('presence_inchat_teacher_' . $user->id, time(), 60);
             }
         }
 
@@ -341,7 +386,7 @@ class ChatController extends Controller
             $receiverSenderType = 'teacher';
         } else {
             // Guru yang buka — hanya boleh mark pesan dari 'student' (yang ditujukan ke guru)
-            /** @var \App\Models\User|null $user */
+            /** @var User|null $user */
             $user = auth()->user();
             if (!$user || !$user->isTeacher()) {
                 return response()->json(['error' => 'Unauthorized'], 403);
@@ -391,7 +436,7 @@ class ChatController extends Controller
         if (request()->route()->named('chat.murid.delete')) {
             if ($chat->sender_type !== 'student') abort(403, 'Aksi tidak diizinkan');
         } else {
-            /** @var \App\Models\User|null $user */
+            /** @var User|null $user */
             $user = auth()->user();
             if (!$user || $chat->sender_id != $user->id) abort(403, 'Aksi tidak diizinkan');
         }
@@ -411,7 +456,7 @@ class ChatController extends Controller
         if ($request->route()->named('chat.murid.edit')) {
             if ($chat->sender_type !== 'student') abort(403, 'Aksi tidak diizinkan');
         } else {
-            /** @var \App\Models\User|null $user */
+            /** @var User|null $user */
             $user = auth()->user();
             if (!$user || $chat->sender_id != $user->id) abort(403, 'Aksi tidak diizinkan');
         }
@@ -438,7 +483,7 @@ class ChatController extends Controller
 
     public function trackActivity(Request $request)
     {
-        /** @var \App\Models\User|null $user */
+        /** @var User|null $user */
         $user      = auth()->user();
         $reportId  = $request->input('report_id');
         $isStudent = $request->boolean('is_student');
@@ -465,7 +510,7 @@ class ChatController extends Controller
             if ($isStudent) {
                 Cache::put('presence_student_' . $report->id, time(), 60);
             } else {
-                /** @var \App\Models\User|null $user */
+                /** @var User|null $user */
                 $user = auth()->user();
                 if ($user && $user->isTeacher()) {
                     // ✅ FIX: Cache only — no more $user->update() on every poll
@@ -519,7 +564,7 @@ class ChatController extends Controller
     public function claimReport($trackingCode)
     {
         $report = Report::where('tracking_code', $trackingCode)->firstOrFail();
-        /** @var \App\Models\User|null $user */
+        /** @var User|null $user */
         $user   = auth()->user();
 
         if (!$user || !$user->isTeacher()) abort(403);

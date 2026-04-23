@@ -23,6 +23,9 @@ Route::middleware('web')->group(function () {
     Route::post('/report', [ReportController::class, 'create'])
         ->middleware('throttle:200,1')
         ->name('report.store');
+    Route::post('/report/{tracking_code}/resend', [ReportController::class, 'resendMagicLink'])
+        ->middleware('throttle:5,1')
+        ->name('report.resend');
     Route::get('/result/{tracking_code}', [ReportController::class, 'result'])->name('result');
     Route::get('/verify-laporan', [ReportController::class, 'verify'])->name('report.verify');
     Route::get('/track', [ReportController::class, 'showTrackForm'])->name('student.track');
@@ -39,6 +42,7 @@ Route::middleware('web')->group(function () {
     Route::post('/chat-murid/{tracking_code}/messages/{id}/mark-read', [ChatController::class, 'markAsRead'])->name('chat.murid.mark-read');
     Route::patch('/chat-murid/{tracking_code}/messages/{id}', [ChatController::class, 'editMessage'])->name('chat.murid.edit');
     Route::delete('/chat-murid/{tracking_code}/messages/{id}', [ChatController::class, 'deleteMessage'])->name('chat.murid.delete');
+    Route::get('/chat-murid/{tracking_code}/updates', [ChatController::class, 'messageUpdates'])->name('chat.murid.updates');
     Route::post('/chat-murid/{tracking_code}/typing', [ChatController::class, 'typing'])->name('chat.murid.typing');
     Route::get('/chat-murid/{tracking_code}/typing', [ChatController::class, 'getTyping'])->name('chat.murid.get-typing');
     Route::get('/chat-murid/{tracking_code}/status', [ChatController::class, 'chatStatus'])->name('chat.murid.status');
@@ -136,6 +140,7 @@ Route::middleware(['auth'])->prefix('teacher')->name('teacher.')->group(function
     Route::post('/chat/{tracking_code}/messages/{id}/mark-read', [ChatController::class, 'markAsRead'])->name('chat.mark-read');
     Route::patch('/chat/{tracking_code}/messages/{id}', [ChatController::class, 'editMessage'])->name('chat.edit');
     Route::delete('/chat/{tracking_code}/messages/{id}', [ChatController::class, 'deleteMessage'])->name('chat.delete');
+    Route::get('/chat/{tracking_code}/updates', [ChatController::class, 'messageUpdates'])->name('chat.updates');
     Route::post('/chat/{tracking_code}/typing', [ChatController::class, 'typing'])->name('chat.typing');
     Route::get('/chat/{tracking_code}/typing', [ChatController::class, 'getTyping'])->name('chat.get-typing');
     Route::get('/chat/{tracking_code}/status', [ChatController::class, 'chatStatus'])->name('chat.status');

@@ -141,6 +141,11 @@
         <main class="content-area bg-gray-50">
             @yield('content')
         </main>
+
+        <!-- Footer -->
+        <footer class="text-center text-xs text-gray-400 py-4 border-t border-gray-100 bg-white">
+            © {{ date('Y') }} Sistem CINTA • <a href="mailto:cintakonseling@cinta-inovasi.my.id" class="hover:text-purple-600 transition">cintakonseling@cinta-inovasi.my.id</a>
+        </footer>
     </div>
 </div>
 

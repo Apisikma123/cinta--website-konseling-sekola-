@@ -95,7 +95,7 @@
                         $name             = $isTeacherSender ? ($chat->sender->name ?? 'Guru BK') : ($report->nama_murid ?? 'Murid');
                         $isCurrentUserMsg = ($isStudentLayout && $chat->sender_type === 'student')
                                          || (!$isStudentLayout && auth()->check() && auth()->user()->isTeacher()
-                                             && $chat->sender_type === 'teacher' && $chat->sender_id === auth()->id());
+                                             && $chat->sender_type === 'teacher' && (int)$chat->sender_id === (int)auth()->id());
                         $isDeleted        = $chat->deleted_for_everyone ?? false;
                     @endphp
 
@@ -115,7 +115,8 @@
                                 </div>
                             @else
                                 <div id="bubble-{{ $chat->id }}"
-                                     class="chat-bubble rounded-2xl px-5 py-3 {{ $isCurrentUserMsg ? 'bg-purple-600 text-white bubble-me' : 'bg-white border border-gray-200 text-slate-700 bubble-other' }}">
+                                     class="chat-bubble rounded-2xl px-5 py-3 {{ $isCurrentUserMsg ? 'bg-purple-600 text-white bubble-me' : 'bg-white border border-gray-200 text-slate-700 bubble-other' }}"
+                                     style="{{ $isCurrentUserMsg ? 'background-color:#7c3aed;color:#fff;' : 'background-color:#fff;color:#334155;' }}">
                                     <div class="text-sm leading-relaxed whitespace-pre-wrap break-words"
                                          id="msg-text-{{ $chat->id }}"
                                          data-msg="{{ e($chat->message) }}">{{ $chat->message }}@if($chat->edited_at)<span class="text-[9px] opacity-60 italic ml-1">(diedit)</span>@endif</div>
@@ -325,6 +326,10 @@
         ? `/chat-murid/${TRACKING}/messages/`
         : `/teacher/chat/${TRACKING}/messages/`;
 
+    const UPDATES_URL = IS_STUDENT
+        ? `/chat-murid/${TRACKING}/updates`
+        : `/teacher/chat/${TRACKING}/updates`;
+
     const TYPING_URL  = IS_STUDENT
         ? `/chat-murid/${TRACKING}/typing`
         : `/teacher/chat/${TRACKING}/typing`;
@@ -348,19 +353,31 @@
     let typingDebounce  = null;
 
     /* ── Adaptive Polling ── */
-    const POLL_FAST     = 2000;  // 2s saat aktif
-    const POLL_SLOW     = 8000;  // 8s saat idle
-    const STATUS_FAST   = 3000;  // 3s saat aktif
-    const STATUS_SLOW   = 10000; // 10s saat idle
-    const IDLE_AFTER    = 30000; // 30 detik tanpa aktivitas = idle
+    const POLL_FAST     = 2000;
+    const POLL_SLOW     = 8000;
+    const STATUS_FAST   = 3000;
+    const STATUS_SLOW   = 10000;
+    const IDLE_AFTER    = 30000;
     let lastActivity    = Date.now();
     let msgInterval     = null;
     let statusInterval  = null;
+    let updInterval     = null;
 
     const rendered = new Set();
+    // Track deleted message IDs so polling never re-renders them
+    const deletedIds = new Set();
+    // Track edit timestamps: id -> edited_at ISO string (prevents redundant DOM flicker)
+    const editedAt = {};
+
     document.querySelectorAll('[data-message-wrapper]').forEach(el => {
         const n = parseInt(el.dataset.messageWrapper, 10);
         if (!isNaN(n)) { rendered.add(String(n)); if (n > lastId) lastId = n; }
+    });
+    // Seed deletedIds from server-rendered deleted bubbles
+    document.querySelectorAll('[data-message-wrapper]').forEach(el => {
+        const id = el.dataset.messageWrapper;
+        const txt = document.getElementById(`msg-text-${id}`);
+        if (txt && txt.classList.contains('italic')) deletedIds.add(id);
     });
 
     /* ── Helpers ── */
@@ -374,7 +391,7 @@
 
     const isMine = chat => IS_STUDENT
         ? chat.sender_type === 'student'
-        : chat.sender_type === 'teacher' && chat.sender_id === CURRENT_UID;
+        : chat.sender_type === 'teacher' && CURRENT_UID != null && Number(chat.sender_id) === Number(CURRENT_UID);
 
     const fmtTime = iso =>
         new Date(iso).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
@@ -416,6 +433,10 @@
         const bubbleCls = mine
             ? 'bg-purple-600 text-white bubble-me'
             : 'bg-white border border-gray-200 text-slate-700 bubble-other';
+
+        const bubbleStyle = mine
+            ? 'background-color:#7c3aed;color:#fff;'
+            : 'background-color:#fff;color:#334155;';
 
         const bodyHtml = deleted
             ? `<div class="text-sm italic text-slate-400" id="msg-text-${id}">
@@ -497,7 +518,7 @@
                         <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${esc(name)}</span>
                         <span class="text-[10px] text-slate-300 font-medium tabular-nums">${time}</span>
                     </div>
-                    <div id="bubble-${id}" class="chat-bubble rounded-2xl px-5 py-3 ${deleted ? 'bg-gray-100 border border-gray-200 text-slate-400' : bubbleCls}">
+                    <div id="bubble-${id}" class="chat-bubble rounded-2xl px-5 py-3 ${deleted ? 'bg-gray-100 border border-gray-200 text-slate-400' : bubbleCls}" style="${deleted ? '' : bubbleStyle}">
                         ${bodyHtml}
                     </div>
                     ${editBox}
@@ -508,10 +529,19 @@
             </div>`;
     }
 
-    /* ── Render / update ── */
+    /* ── renderMessage: handles new messages AND updates to existing ones ── */
     function renderMessage(chat) {
         const key = String(chat.id);
+
         if (rendered.has(key)) {
+            // Already rendered — check for updates (edit / delete)
+            applyMessageUpdate({
+                id: chat.id,
+                message: chat.deleted_for_everyone ? null : chat.message,
+                is_deleted: !!(chat.is_deleted || chat.deleted_for_everyone),
+                is_edited: !!(chat.is_edited || chat.edited_at),
+            });
+            // Update read status if needed
             if (chat.is_read) {
                 const s = document.querySelector(`[data-status-id="${chat.id}"]`);
                 if (s && !s.classList.contains('text-emerald-500')) {
@@ -530,6 +560,36 @@
             fetch(`${BASE_ACTION}${chat.id}/mark-read`, {
                 method: 'POST', headers: { 'X-CSRF-TOKEN': CSRF() }
             }).catch(() => {});
+        }
+    }
+
+    /* ── applyMessageUpdate: apply edit or delete to an already-rendered bubble ── */
+    function applyMessageUpdate(upd) {
+        const id     = String(upd.id);
+        const bubble = document.getElementById(`bubble-${id}`);
+        const txt    = document.getElementById(`msg-text-${id}`);
+        if (!bubble || !txt) return; // message not in DOM yet – poll() will handle it
+
+        // ── DELETED ──
+        if (upd.is_deleted) {
+            if (deletedIds.has(id)) return; // already shown as deleted, skip
+            deletedIds.add(id);
+            bubble.className = 'chat-bubble bg-gray-100 border border-gray-200 text-slate-400 rounded-2xl px-5 py-3';
+            txt.innerHTML    = '<i class="fas fa-ban text-xs mr-1"></i> Pesan ini telah dihapus';
+            txt.className    = 'text-sm italic text-slate-400';
+            document.querySelector(`[data-message-wrapper="${id}"] .relative.flex-shrink-0`)?.remove();
+            document.querySelector(`[data-status-id="${id}"]`)?.remove();
+            return;
+        }
+
+        // ── EDITED ──
+        if (upd.is_edited && upd.message != null) {
+            // Dedup: skip if edited_at unchanged (prevents DOM flicker every 2s poll)
+            if (upd.edited_at && editedAt[id] === upd.edited_at) return;
+            editedAt[id]    = upd.edited_at ?? String(Date.now());
+            txt.dataset.msg = upd.message;
+            txt.innerHTML   = esc(upd.message)
+                + ' <span class="text-[9px] opacity-60 italic ml-1">(diedit)</span>';
         }
     }
 
@@ -573,17 +633,44 @@
 
     /* ── Poll messages (adaptive) ── */
     async function poll() {
-        if (pollingMsg) return; // Allow background polling so messages are marked as read instantly
+        if (pollingMsg) return;
         pollingMsg = true;
         try {
             const url  = lastId > 0 ? `${MESSAGES_URL}?after_id=${lastId}` : MESSAGES_URL;
             const data = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(5000) }).then(r => r.json());
             if (Array.isArray(data)) {
                 data.forEach(renderMessage);
-                if (data.length > 0) touchActivity(); // ada pesan baru = aktif
+                if (data.length > 0) touchActivity();
             }
         } catch(_) {}
         finally { pollingMsg = false; }
+    }
+
+    /* ── Poll updates: sync edits & deletes to OTHER party in real-time ── */
+    let pollingUpdates = false;
+    async function pollUpdates() {
+        if (pollingUpdates) return;
+        pollingUpdates = true;
+        try {
+            // ?secs=12 tells server to look back 12s – slightly longer than our 2s poll
+            // so no gap regardless of clock drift. Server dedupes via edited_at tracking.
+            const r = await fetch(`${UPDATES_URL}?secs=12`, {
+                cache: 'no-store',
+                signal: AbortSignal.timeout(4000)
+            });
+            if (!r.ok) {
+                console.error('[chat] pollUpdates error', r.status, await r.text().catch(()=>''));
+                return;
+            }
+            const data = await r.json();
+            if (Array.isArray(data) && data.length > 0) {
+                data.forEach(applyMessageUpdate);
+            }
+        } catch(err) {
+            console.warn('[chat] pollUpdates fetch failed:', err?.message ?? err);
+        } finally {
+            pollingUpdates = false;
+        }
     }
 
     /* ── Combined poll: typing + presence in ONE request ── */
@@ -632,6 +719,7 @@
         const idle      = isIdle();
         const wantMsg   = idle ? POLL_SLOW : POLL_FAST;
         const wantStat  = idle ? STATUS_SLOW : STATUS_FAST;
+        const wantUpd   = idle ? 6000 : 2000; // updates interval
 
         if (msgInterval?._ms !== wantMsg) {
             clearInterval(msgInterval);
@@ -642,6 +730,11 @@
             clearInterval(statusInterval);
             statusInterval = setInterval(pollStatus, wantStat);
             statusInterval._ms = wantStat;
+        }
+        if (updInterval?._ms !== wantUpd) {
+            clearInterval(updInterval);
+            updInterval = setInterval(pollUpdates, wantUpd);
+            updInterval._ms = wantUpd;
         }
     }
 
@@ -707,11 +800,19 @@
             msgEl.innerHTML   = esc(newMsg) + ' <span class="text-[9px] opacity-60 italic ml-1">(diedit)</span>';
         }
         window.cancelEdit(id);
+        // Track locally so pollUpdates doesn't overwrite the sender's just-edited DOM
+        // The real edited_at from server will match this sentinel after first pollUpdates
+        editedAt[String(id)] = '__pending__';
         fetch(`${BASE_ACTION}${id}`, {
             method: 'PATCH',
             headers: { 'Content-Type':'application/json', 'X-CSRF-TOKEN': CSRF() },
             body: JSON.stringify({ message: newMsg })
-        }).catch(() => {});
+        }).then(r => r.ok ? r.json() : null)
+          .then(data => {
+              // Store real edited_at from server so dedup comparison works correctly
+              if (data?.chat?.edited_at) editedAt[String(id)] = data.chat.edited_at;
+          })
+          .catch(() => {});
     };
 
     window.confirmDelete = id => {
@@ -724,6 +825,7 @@
 
     window.executeDelete = id => {
         window.cancelDelete(id);
+        const idStr  = String(id);
         const bubble = document.getElementById(`bubble-${id}`);
         const txt    = document.getElementById(`msg-text-${id}`);
         const ctxBtn = document.querySelector(`[data-message-wrapper="${id}"] .relative.flex-shrink-0`);
@@ -732,6 +834,8 @@
         if (txt)    { txt.innerHTML = '<i class="fas fa-ban text-xs mr-1"></i> Pesan ini telah dihapus'; txt.className = 'text-sm italic text-slate-400'; }
         ctxBtn?.remove();
         status?.remove();
+        // Mark as deleted locally so it never reappears from polling
+        deletedIds.add(idStr);
         fetch(`${BASE_ACTION}${id}`, {
             method: 'DELETE',
             headers: { 'Content-Type':'application/json', 'X-CSRF-TOKEN': CSRF() }
@@ -751,12 +855,15 @@
     scrollBottom(true);
     poll();
     pollStatus();
+    pollUpdates();
 
     // Start adaptive polling
     msgInterval    = setInterval(poll, POLL_FAST);
     msgInterval._ms = POLL_FAST;
     statusInterval = setInterval(pollStatus, STATUS_FAST);
     statusInterval._ms = STATUS_FAST;
+    updInterval    = setInterval(pollUpdates, 2000);
+    updInterval._ms = 2000;
 
     // Re-check idle every 15s and adjust intervals
     setInterval(adjustPolling, 15000);
@@ -766,6 +873,7 @@
             touchActivity();
             poll();
             pollStatus();
+            pollUpdates();
         }
     });
 

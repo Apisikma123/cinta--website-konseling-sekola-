@@ -31,30 +31,34 @@ class TeacherController extends Controller
         $reports = Report::with([
             'detail.handledBy:id,name'
         ])
+        ->verified()
         ->when($teacher->school, fn($q) => $q->where('nama_sekolah', $teacher->school))
         ->latest()
         ->take(3)
         ->get();
 
-        $totalReports = Report::when($teacher->school, fn($q) => $q->where('nama_sekolah', $teacher->school))
+        $totalReports = Report::verified()
+            ->when($teacher->school, fn($q) => $q->where('nama_sekolah', $teacher->school))
             ->count();
-        $studentCount = Report::when($teacher->school, fn($q) => $q->where('nama_sekolah', $teacher->school))
+        $studentCount = Report::verified()
+            ->when($teacher->school, fn($q) => $q->where('nama_sekolah', $teacher->school))
             ->distinct('nama_murid')
             ->count();
 
         $statusChart = [
-            'baru' => Report::where('status', Report::STATUS_BARU)
+            'baru' => Report::verified()->where('status', Report::STATUS_BARU)
                 ->when($teacher->school, fn($q) => $q->where('nama_sekolah', $teacher->school))
                 ->count(),
-            'diproses' => Report::where('status', Report::STATUS_DIPROSES)
+            'diproses' => Report::verified()->where('status', Report::STATUS_DIPROSES)
                 ->when($teacher->school, fn($q) => $q->where('nama_sekolah', $teacher->school))
                 ->count(),
-            'selesai' => Report::where('status', Report::STATUS_SELESAI)
+            'selesai' => Report::verified()->where('status', Report::STATUS_SELESAI)
                 ->when($teacher->school, fn($q) => $q->where('nama_sekolah', $teacher->school))
                 ->count(),
         ];
 
-        $dailyReports = Report::selectRaw('DATE(created_at) as date, COUNT(*) as total', [])
+        $dailyReports = Report::verified()
+            ->selectRaw('DATE(created_at) as date, COUNT(*) as total', [])
             ->when($teacher->school, fn($q) => $q->where('nama_sekolah', $teacher->school))
             ->groupBy('date')
             ->orderBy('date', 'asc')
@@ -72,11 +76,21 @@ class TeacherController extends Controller
         $reports = Report::with([
             'detail.handledBy:id,name'
         ])
+        ->verified()
         ->when($teacher->school, fn($q) => $q->where('nama_sekolah', $teacher->school))
         ->latest()
         ->paginate(10);
 
-        return view('teacher.reports', compact('reports', 'teacher'));
+        // Get unread chat counts per report (student messages not yet read by teacher)
+        $unreadChatCounts = Chat::where('sender_type', 'student')
+            ->where('is_read', false)
+            ->whereIn('report_id', $reports->pluck('id'))
+            ->selectRaw('report_id, COUNT(*) as cnt')
+            ->groupBy('report_id')
+            ->pluck('cnt', 'report_id')
+            ->toArray();
+
+        return view('teacher.reports', compact('reports', 'teacher', 'unreadChatCounts'));
     }
 
     public function settings()

@@ -18,6 +18,7 @@ class Report extends Model
         'tracking_code',
         'nama_murid',
         'email_murid',
+        'email_verified_at',
         'nama_sekolah',
         'kelas',
         'title',
@@ -27,10 +28,15 @@ class Report extends Model
         'status',
         'guru_id',
         'secret_code',
+        'claimed_by',
+        'claimed_at',
     ];
 
     protected $casts = [
-        'guru_id' => 'integer',
+        'guru_id'           => 'integer',
+        'claimed_by'        => 'integer',
+        'claimed_at'        => 'datetime',
+        'email_verified_at' => 'datetime',
     ];
 
     // RELATIONS
@@ -42,6 +48,14 @@ class Report extends Model
     public function guru()
     {
         return $this->belongsTo(User::class, 'guru_id');
+    }
+
+    /**
+     * Guru yang mengambil / mengklaim laporan ini.
+     */
+    public function claimedBy()
+    {
+        return $this->belongsTo(User::class, 'claimed_by');
     }
 
     public function chats()
@@ -59,8 +73,34 @@ class Report extends Model
         return $this->hasMany(Testimonial::class, 'report_id');
     }
 
-    // Helpers
-    public function isFinished()
+    // ACCESSORS
+
+    /**
+     * $report->is_claimed — true bila laporan sudah diambil oleh guru.
+     */
+    public function getIsClaimedAttribute(): bool
+    {
+        return ! is_null($this->claimed_by);
+    }
+
+    /**
+     * True jika laporan sudah diverifikasi via magic link (atau tidak perlu email).
+     */
+    public function isEmailVerified(): bool
+    {
+        return ! is_null($this->email_verified_at);
+    }
+
+    /**
+     * Scope: hanya laporan yang sudah diverifikasi (tampil ke guru).
+     */
+    public function scopeVerified($query)
+    {
+        return $query->whereNotNull('email_verified_at');
+    }
+
+    // HELPERS
+    public function isFinished(): bool
     {
         return $this->status === self::STATUS_SELESAI;
     }

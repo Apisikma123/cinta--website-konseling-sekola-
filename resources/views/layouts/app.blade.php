@@ -77,6 +77,8 @@
     <!-- FOOTER -->
     <footer class="max-w-md mx-auto px-4 py-6 text-center text-xs text-purple-600">
         © {{ date('Y') }} CINTA • Privasi Terjamin
+        <br>
+        <a href="mailto:cintakonseling@cinta-inovasi.my.id" class="hover:text-purple-800 transition">cintakonseling@cinta-inovasi.my.id</a>
     </footer>
 
     <script>

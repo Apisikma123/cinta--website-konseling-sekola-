@@ -24,27 +24,34 @@
             </div>
         </div>
 
-        {{-- Status Selector --}}
-        <form action="{{ route('teacher.reports.update-status', $report->id) }}" method="POST"
-              class="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 flex-shrink-0">
-            @csrf
-            @method('PATCH')
-            @php
-                $dotColor = match($report->status) {
-                    'selesai'  => 'bg-emerald-400',
-                    'diproses' => 'bg-purple-500',
-                    default    => 'bg-amber-400',
-                };
-            @endphp
-            <span class="w-2 h-2 rounded-full {{ $dotColor }} flex-shrink-0"></span>
-            <select name="status" onchange="this.form.submit()"
-                    class="bg-transparent border-none text-sm font-semibold text-gray-700 cursor-pointer focus:ring-0 p-0 pr-6 appearance-none">
-                <option value="baru"     {{ $report->status === 'baru'     ? 'selected' : '' }}>Baru</option>
-                <option value="diproses" {{ $report->status === 'diproses' ? 'selected' : '' }}>Diproses</option>
-                <option value="selesai"  {{ $report->status === 'selesai'  ? 'selected' : '' }}>Selesai</option>
-            </select>
-            <i class="fas fa-chevron-down text-[9px] text-gray-400 pointer-events-none -ml-4"></i>
-        </form>
+        {{-- Status Selector (hanya tampil setelah laporan diklaim) --}}
+        @if($report->is_claimed)
+            <form action="{{ route('teacher.reports.update-status', $report->id) }}" method="POST"
+                  class="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 flex-shrink-0">
+                @csrf
+                @method('PATCH')
+                @php
+                    $dotColor = match($report->status) {
+                        'selesai'  => 'bg-emerald-400',
+                        'diproses' => 'bg-purple-500',
+                        default    => 'bg-amber-400',
+                    };
+                @endphp
+                <span class="w-2 h-2 rounded-full {{ $dotColor }} flex-shrink-0"></span>
+                <select name="status" onchange="this.form.submit()"
+                        class="bg-transparent border-none text-sm font-semibold text-gray-700 cursor-pointer focus:ring-0 p-0 pr-6 appearance-none">
+                    <option value="baru"     {{ $report->status === 'baru'     ? 'selected' : '' }}>Baru</option>
+                    <option value="diproses" {{ $report->status === 'diproses' ? 'selected' : '' }}>Diproses</option>
+                    <option value="selesai"  {{ $report->status === 'selesai'  ? 'selected' : '' }}>Selesai</option>
+                </select>
+                <i class="fas fa-chevron-down text-[9px] text-gray-400 pointer-events-none -ml-4"></i>
+            </form>
+        @else
+            <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 flex-shrink-0">
+                <span class="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0"></span>
+                Belum Diambil
+            </span>
+        @endif
     </div>
 
     {{-- Card Detail Laporan - BESAR --}}
@@ -276,7 +283,11 @@
                         </a>
 
                         @if($report->phone)
-                            <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $report->phone) }}" target="_blank"
+                            @php
+                                $waNumber = preg_replace('/[^0-9]/', '', $report->phone);
+                                if (str_starts_with($waNumber, '0')) $waNumber = '62' . substr($waNumber, 1);
+                            @endphp
+                            <a href="https://wa.me/{{ $waNumber }}" target="_blank"
                                class="flex items-center justify-center gap-3 px-5 py-4 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-200 group">
                                 <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
                                     <i class="fab fa-whatsapp text-xl"></i>
@@ -299,10 +310,10 @@
                         @endif
                     </div>
 
-                    <div class="mt-5 p-4 bg-amber-50 rounded-xl flex items-start gap-3">
+                    <div class="mt-6 p-4 bg-amber-50 rounded-xl flex items-start gap-3">
                         <i class="fas fa-info-circle text-amber-500 mt-0.5"></i>
                         <p class="text-xs text-amber-700">
-                            Chat internal akan dihapus otomatis dalam 3 hari. Gunakan WhatsApp untuk komunikasi penting.
+                            Chat internal akan dihapus otomatis dalam 3 hari.<br>Gunakan WhatsApp untuk komunikasi penting.
                         </p>
                     </div>
                 @endif

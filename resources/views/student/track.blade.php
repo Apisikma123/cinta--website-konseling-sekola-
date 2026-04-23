@@ -1,4 +1,6 @@
 @extends('layouts.auth')
+@section('title', 'Detail Laporan - CINTA')
+@section('page_heading', 'Detail Laporan BK')
 
 @section('content')
 <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -31,6 +33,27 @@
             <p class="text-xs sm:text-sm text-gray-600 mt-2">Komunikasi dengan guru BK.</p>
         </div>
     </div>
+
+    {{-- Banner: belum verifikasi email --}}
+    @if($report->email_murid && !$report->email_verified_at)
+    <div class="bg-amber-50 border border-amber-300 rounded-xl p-5 mb-6 flex items-start gap-4">
+        <div class="w-10 h-10 flex-shrink-0 bg-amber-100 rounded-full flex items-center justify-center">
+            <i class="fas fa-envelope-open-text text-amber-500"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+            <p class="font-bold text-amber-800 text-sm">Laporan Belum Diverifikasi</p>
+            <p class="text-xs text-amber-700 mt-1 leading-relaxed">
+                Laporan Anda <strong>belum terlihat oleh guru</strong> karena Anda belum mengklik tautan verifikasi yang dikirim ke email
+                <strong>{{ $report->email_murid }}</strong>. Silakan periksa kotak masuk atau folder spam.
+            </p>
+            <button onclick="resendLink()" id="resendBtn"
+                    class="mt-3 inline-flex items-center gap-2 text-xs font-semibold text-amber-700 bg-amber-100 hover:bg-amber-200 px-3 py-1.5 rounded-lg transition-colors">
+                <i class="fas fa-paper-plane"></i> Kirim Ulang Tautan
+            </button>
+            <span id="resendMsg" class="hidden ml-3 text-xs text-emerald-600 font-medium"></span>
+        </div>
+    </div>
+    @endif
 
     <!-- Status Timeline -->
     <div class="bg-white rounded-xl p-6 sm:p-8 border border-purple-100 mb-8 shadow-sm">
@@ -143,13 +166,20 @@
         <div class="bg-white rounded-xl p-6 sm:p-8 border border-purple-100 shadow-sm">
             <h3 class="font-semibold text-gray-900 text-sm sm:text-base mb-4">Butuh Bantuan?</h3>
             <a href="{{ route('chat.murid', ['tracking_code' => $report->tracking_code]) }}"
-               class="flex items-center justify-center w-full bg-purple-600 hover:bg-purple-700 active:scale-95 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 mb-2">
+               class="relative flex items-center justify-center w-full bg-purple-600 hover:bg-purple-700 active:scale-95 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 mb-2">
+                <span id="student-chat-badge" class="hidden absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold min-w-[20px] h-5 px-1.5 flex items-center justify-center rounded-full border-2 border-white shadow-sm"></span>
                 <i class="fas fa-comments mr-2"></i> <span>Chat Langsung</span>
             </a>
             <a href="{{ route('chat.whatsapp', ['tracking_code' => $report->tracking_code]) }}"
                class="flex items-center justify-center w-full bg-green-600 hover:bg-green-700 active:scale-95 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300">
                 <i class="fab fa-whatsapp mr-2"></i> <span>Chat via WA</span>
             </a>
+            <div class="mt-4 p-3 bg-amber-50 rounded-xl flex items-start gap-3">
+                <i class="fas fa-info-circle text-amber-500 mt-0.5"></i>
+                <p class="text-xs text-amber-700">
+                    Chat internal akan dihapus otomatis dalam 3 hari.<br>Gunakan WhatsApp untuk komunikasi penting.
+                </p>
+            </div>
         </div>
 
         <a href="/" aria-label="Kembali ke Beranda"
@@ -166,6 +196,70 @@ function copyCode() {
         showToast('Kode tracking berhasil disalin!', 'success', 2000);
     });
 }
+
+async function resendLink() {
+    const btn = document.getElementById('resendBtn');
+    const msg = document.getElementById('resendMsg');
+    if (!btn) return;
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mengirim...';
+
+    try {
+        const res = await fetch('/resend-magic-link/{{ $report->tracking_code }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
+            }
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+            btn.classList.add('hidden');
+            msg.textContent = '✓ Tautan dikirim! Cek email Anda.';
+            msg.classList.remove('hidden');
+        } else if (res.status === 429) {
+            const wait = data.retry_after ?? 120;
+            btn.innerHTML = `<i class="fas fa-clock"></i> Tunggu ${wait}d lagi`;
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane"></i> Kirim Ulang Tautan';
+            }, wait * 1000);
+        } else {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-paper-plane"></i> Kirim Ulang Tautan';
+            showToast('Gagal mengirim, coba lagi.', 'error', 3000);
+        }
+    } catch (e) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i> Kirim Ulang Tautan';
+    }
+}
+
+// Poll unread chat count for student badge
+(function() {
+    const badge = document.getElementById('student-chat-badge');
+    if (!badge) return;
+
+    async function fetchUnread() {
+        try {
+            const res = await fetch('/api/chat/unread/{{ $report->tracking_code }}');
+            const data = await res.json();
+            if (data.count > 0) {
+                badge.textContent = data.count;
+                badge.classList.remove('hidden');
+                badge.style.display = 'flex';
+            } else {
+                badge.classList.add('hidden');
+                badge.style.display = 'none';
+            }
+        } catch(e) {}
+    }
+
+    fetchUnread();
+    setInterval(fetchUnread, 15000);
+})();
 
 // Testimonial Modal Functions
 let selectedRating = 0;

@@ -26,6 +26,10 @@ class ReportService
 
             $reportData = array_merge($data, ['tracking_code' => $code, 'status' => Report::STATUS_BARU]);
             
+            // Jika tidak ada email → langsung verified (murid dapat kode tanpa klik link)
+            // Jika ada email → belum verified sampai magic link diklik
+            $reportData['email_verified_at'] = empty($data['email_murid']) ? now() : null;
+
             // Auto-assign a teacher from the same school if available
             if (!empty($data['nama_sekolah'])) {
                 $teacher = User::where('role', 'teacher')
@@ -42,9 +46,13 @@ class ReportService
 
             $report = Report::create($reportData);
 
-            event(new ReportCreated($report));
+            // Jika tidak ada email, maka guru diberitahu otomatis karena murid langsung dapat kode
+            if (empty($report->email_murid)) {
+                event(new ReportCreated($report));
+                \Illuminate\Support\Facades\Cache::put('teacher_notified_' . $report->id, true, now()->addDays(30));
+            }
 
-            // Langsung kirim notif success ke murid & guru karena sudah terverifikasi!
+            // Kirim link ajaib (magic link) jika murid beri email
             $this->sendSuccessNotification($report);
 
             return $report;
@@ -80,24 +88,34 @@ class ReportService
     }
 
     /**
-     * Send SUCCESS notification with Tracking Code after verification
+     * Send magic link email to student after report is created.
+     * Bug 1 fix: email contains a signed magic link, NOT the raw tracking code.
+     * Clicking the link redirects to the kode-unik page.
+     * If no email is provided, skips silently.
      */
     public function sendSuccessNotification(Report $report): void
     {
+        if (empty($report->email_murid)) {
+            return;
+        }
+
         try {
-            $emailBody = "Selamat!\nLaporan kamu sudah berhasil diverifikasi dan masuk ke sistem kami.\n\n";
-            $emailBody .= "Berikut adalah detail laporan kamu:\n";
-            $emailBody .= "- Nama Pelapor: {$report->nama_murid}\n";
-            $emailBody .= "- Email: {$report->email_murid}\n";
-            $emailBody .= "- Sekolah: {$report->nama_sekolah}\n";
-            $emailBody .= "- Kelas: {$report->kelas}\n";
-            $emailBody .= "- Jenis Laporan: {$report->jenis_laporan}\n\n";
-            $emailBody .= "KODE TRACKING / UNIK KAMU: {$report->tracking_code}\n\n";
-            $emailBody .= "Mohon simpan kode ini baik-baik ya untuk memantau status atau melakukan konsultasi bersama guru BK!\n";
+            // Generate signed URL valid for 24 hours
+            $magicLink = URL::signedRoute('report.verify', [
+                'tracking_code' => $report->tracking_code,
+            ], now()->addHours(24));
+
+            $emailBody  = "Halo {$report->nama_murid}!\n\n";
+            $emailBody .= "Laporan BK Anda telah berhasil kami terima.\n\n";
+            $emailBody .= "Klik tautan berikut untuk melihat kode unik laporan Anda:\n";
+            $emailBody .= $magicLink . "\n\n";
+            $emailBody .= "Tautan ini akan kedaluwarsa dalam 24 jam.\n";
+            $emailBody .= "Jika Anda tidak merasa mengirim laporan ini, abaikan email ini.\n\n";
+            $emailBody .= "Terima kasih,\nSistem Laporan BK CINTA";
 
             Mail::raw($emailBody, function ($message) use ($report) {
                 $message->to($report->email_murid)
-                    ->subject('Laporan Diterima! Ini Kode Unik Kamu');
+                    ->subject('Verifikasi Laporan BK — Klik untuk Lihat Kode Unik');
             });
 
             // CATATAN: Notifikasi ke guru sudah ditangani oleh Event Listener
@@ -105,8 +123,12 @@ class ReportService
             // di createVerified(). Jangan panggil sendReportNotificationToTeachers() di sini
             // karena akan mengakibatkan guru menerima 2 email untuk 1 laporan yang sama.
 
+            Log::info('Magic link email sent to student', [
+                'report_id' => $report->id,
+                'email'     => $report->email_murid,
+            ]);
         } catch (\Exception $e) {
-            Log::error('Failed to send success email: ' . $e->getMessage());
+            Log::error('Failed to send magic link email: ' . $e->getMessage());
         }
     }
 
